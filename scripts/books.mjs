@@ -2,6 +2,7 @@
 // Manage audiobooks from the Mac. Needs: node >= 18, ffprobe/ffmpeg on PATH.
 //
 //   node scripts/books.mjs add  <book.mp3> [--cover cover.jpg] [--title "…"] [--author "…"] [--id slug]
+//                               [--no-chapter-titles]   drop junk track names, app shows "Chapter N"
 //   node scripts/books.mjs list
 //   node scripts/books.mjs remove <id>
 //
@@ -17,6 +18,7 @@ import { randomBytes } from 'node:crypto';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PART_SIZE = 20 * 1024 * 1024; // 20 MiB, below the Worker body limit, above R2's 5 MiB minimum
+const PARALLEL_PARTS = Number(process.env.PARALLEL_PARTS) || 4;
 
 // ------------------------------------------------------------- arguments
 
@@ -127,8 +129,11 @@ async function uploadMultipart(file, key, contentType) {
   const { upload_id } = await request('POST', '/api/upload/start', { json: { key, content_type: contentType } });
   const fd = openSync(file, 'r');
   const parts = [];
-  try {
-    for (let n = 1; n <= totalParts; n++) {
+  let next = 1;
+  let done = 0;
+  const worker = async () => {
+    while (next <= totalParts) {
+      const n = next++;
       const offset = (n - 1) * PART_SIZE;
       const length = Math.min(PART_SIZE, size - offset);
       const buffer = Buffer.alloc(length);
@@ -136,9 +141,14 @@ async function uploadMultipart(file, key, contentType) {
       const query = `key=${encodeURIComponent(key)}&upload_id=${encodeURIComponent(upload_id)}&part=${n}`;
       const part = await withRetry(() => request('PUT', `/api/upload/part?${query}`, { body: buffer, contentType }));
       parts.push({ part_number: part.part_number, etag: part.etag });
-      process.stderr.write(`\r  part ${n}/${totalParts} (${Math.round(((offset + length) / size) * 100)} %)`);
+      done++;
+      process.stderr.write(`\r  part ${done}/${totalParts} (${Math.round((done / totalParts) * 100)} %)`);
     }
+  };
+  try {
+    await Promise.all(Array.from({ length: Math.min(PARALLEL_PARTS, totalParts) }, worker));
     process.stderr.write('\n');
+    parts.sort((a, b) => a.part_number - b.part_number);
     return await request('POST', '/api/upload/complete', { json: { key, upload_id, parts } });
   } catch (err) {
     process.stderr.write('\n');
@@ -168,7 +178,7 @@ async function add() {
   const duration = Number(info.format?.duration) || 0;
   const size = Number(info.format?.size) || statSync(file).size;
   const chapters = (info.chapters || []).map((c) => ({
-    title: c.tags?.title || null,
+    title: flags['no-chapter-titles'] ? null : c.tags?.title || null,
     start_sec: Number(c.start_time) || 0,
   }));
 
