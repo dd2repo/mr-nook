@@ -4,3 +4,7 @@ node_modules/
 .secrets/
 *.local.md
 .DS_Store
+apk-build/
+.apk-build/
+.toolchain
+public/app/*.apk

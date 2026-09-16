@@ -28,6 +28,37 @@ Access from the internet is guarded by one shared secret: open the app once via
 `https://<app>/#k=<secret>` and the browser stores an HttpOnly cookie for a year.
 Without the cookie the API and the audio streams answer 401.
 
+### Inviting someone
+
+Handing the raw secret around is clumsy, so the app issues invite links instead. In
+Settings, "Einladung erstellen" creates a single-use token that expires after 14 days and
+returns a link like `https://<app>/einladung/<token>`. Send that link over any messenger.
+
+The invite page is the only public page. It explains both ways to install the app, hands
+out the Android package, and its "Zugang aktivieren" button trades the token for the same
+access cookie. A token works exactly once; reuse, expiry and unknown tokens are rejected.
+Nothing about the recipient is stored, and open invites can be revoked in Settings.
+
+## Android package
+
+Installing the web app from the browser is the recommended path: two taps, no warning about
+unknown sources. For a package file anyway, `scripts/build-apk.sh` wraps the web app in a
+Trusted Web Activity and writes a signed `public/app/mr-nook.apk` plus the matching
+`public/.well-known/assetlinks.json`. The launcher icon is the pixel mascot.
+
+```bash
+JAVA_HOME=/path/to/jdk ANDROID_HOME=/path/to/android-sdk ./scripts/build-apk.sh
+```
+
+It needs a JDK 17 and the Android SDK (platform 34, build-tools 34) and reuses the keystore
+in `.secrets/`. **Keep that keystore.** Android only accepts updates signed with the same
+key; losing it forces an uninstall and reinstall on every device. The package is a build
+artifact and stays out of git; `wrangler deploy` uploads whatever is in `public/`.
+
+Because it is a Trusted Web Activity it shares Chrome's cookies, so activate access in
+Chrome first and install the package afterwards, otherwise the app opens on the locked
+screen.
+
 ## Setup (once)
 
 1. Create a free Cloudflare account and enable R2 in the dashboard (R2 asks for a payment
@@ -105,9 +136,11 @@ Open `http://localhost:8787/#k=local-dev-key-change-me`.
 ```
 src/worker.js          API, auth, R2 range streaming, multipart upload
 public/                PWA: index.html, app.js, styles.css, sw.js, manifest, icons, img
+public/einladung.html  the public invite and setup page
 migrations/            D1 schema (applied with wrangler d1 migrations apply)
 scripts/setup.sh       Cloudflare provisioning + deploy
 scripts/books.mjs      add / list / remove audiobooks
+scripts/build-apk.sh   wraps the web app in a signed Android package
 design/                Mascot artwork (reference) and icon proposals
 scripts/make-pixel-icon.mjs  Renders the 32x32 pixel sprite into icons and the in-app mascot
 ```

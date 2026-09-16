@@ -4,7 +4,7 @@
 const audio = document.getElementById('audio');
 const app = document.getElementById('app');
 
-const APP_VERSION = '0.4.0';
+const APP_VERSION = '0.5.0';
 const GITHUB_URL = 'https://github.com/dd2repo/mr-nook';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 const SKIP_BACK_OPTIONS = [10, 15, 30];
@@ -88,6 +88,18 @@ const STRINGS = {
     language: 'Sprache',
     profile: 'Profil',
     switchProfile: 'Profil wechseln',
+    invites: 'Einladungen',
+    newInvite: 'Einladung erstellen',
+    inviteHint: 'Erzeugt einen Link mit Anleitung. Einmal gültig, läuft nach 14 Tagen ab.',
+    inviteFor: 'Für wen?',
+    copyLink: 'Link kopieren',
+    copied: 'Kopiert',
+    share: 'Teilen',
+    openInvites: 'Offen',
+    usedInvite: 'Benutzt',
+    expiredInvite: 'Abgelaufen',
+    revoke: 'Zurückziehen',
+    noInvites: 'Keine offenen Einladungen.',
     changePicture: 'Profilbild',
     libraryHeading: 'Bibliothek',
     refreshLibrary: 'Bibliothek neu laden',
@@ -184,6 +196,18 @@ const STRINGS = {
     language: 'Language',
     profile: 'Profile',
     switchProfile: 'Switch profile',
+    invites: 'Invites',
+    newInvite: 'Create invite',
+    inviteHint: 'Creates a link with setup instructions. Single use, expires after 14 days.',
+    inviteFor: 'Who is it for?',
+    copyLink: 'Copy link',
+    copied: 'Copied',
+    share: 'Share',
+    openInvites: 'Open',
+    usedInvite: 'Used',
+    expiredInvite: 'Expired',
+    revoke: 'Revoke',
+    noInvites: 'No open invites.',
     changePicture: 'Profile picture',
     libraryHeading: 'Library',
     refreshLibrary: 'Refresh library',
@@ -235,6 +259,7 @@ const state = {
   pendingStart: 0,
   showTotal: false,
   avatarVersion: Date.now(),
+  invites: null,
 };
 
 function readJson(key) {
@@ -411,6 +436,7 @@ async function route() {
   if (['home', 'library', 'search', 'settings'].includes(screen)) {
     state.screen = screen;
     if (screen === 'home' || screen === 'library') loadLibrary().then(render).catch(() => {});
+    if (screen === 'settings') loadInvites();
     render();
     if (screen === 'search') {
       const input = document.getElementById('q');
@@ -1061,6 +1087,66 @@ function renderSearch() {
 
 // ---- settings
 
+function inviteUrl(token) {
+  return `${location.origin}/einladung/${token}`;
+}
+
+function renderInviteRows() {
+  if (state.invites === null) return '';
+  const open = state.invites.filter((i) => !i.used_at && i.expires_at > Date.now());
+  if (!open.length) return `<div class="setting"><span class="hint">${esc(t('noInvites'))}</span></div>`;
+  return open.map((i) => `<div class="setting">
+      <div style="min-width:0">
+        <div class="label">${esc(i.label || t('openInvites'))}</div>
+        <div class="hint" style="word-break:break-all">${esc(inviteUrl(i.token))}</div>
+      </div>
+      <div class="row" style="gap:6px;flex:none">
+        <button class="link" data-action="copy-invite" data-token="${esc(i.token)}">${esc(t('copyLink'))}</button>
+        <button class="link" style="color:var(--terracotta)" data-action="revoke-invite" data-token="${esc(i.token)}">${esc(t('revoke'))}</button>
+      </div>
+    </div>`).join('');
+}
+
+async function loadInvites() {
+  try {
+    state.invites = await api('/invites');
+    render();
+  } catch { /* ignore */ }
+}
+
+async function createInvite() {
+  const label = prompt(t('inviteFor'), 'Katie');
+  if (label === null) return;
+  try {
+    const invite = await api('/invites', { method: 'POST', body: { label: label.trim(), days: 14 } });
+    state.invites = [invite, ...(state.invites || [])];
+    render();
+    await copyInvite(invite.token);
+  } catch (err) {
+    toast(`${t('error')}: ${err.message}`);
+  }
+}
+
+async function copyInvite(token) {
+  const url = inviteUrl(token);
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'Mr. Nook', text: 'Dein Zugang zu Mr. Nook', url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    toast(t('copied'));
+  } catch {
+    toast(url);
+  }
+}
+
+function revokeInvite(token) {
+  state.invites = (state.invites || []).filter((i) => i.token !== token);
+  render();
+  api(`/invites/${token}`, { method: 'DELETE' }).catch((err) => toast(`${t('error')}: ${err.message}`));
+}
+
 function renderSettings() {
   const u = state.user;
   const seg = (name, options, current) => `<div class="segment">${options.map(([value, label]) => `<button data-action="set-${name}" data-value="${value}" class="${String(current) === String(value) ? 'active' : ''}">${esc(label)}</button>`).join('')}</div>`;
@@ -1082,6 +1168,11 @@ function renderSettings() {
     <div class="settings-group">
       <div class="setting"><div class="row">${avatarHtml(u)}<span class="label">${esc(u.name)}</span></div><button class="link" data-action="edit-avatar" data-id="${u.id}">${esc(t('changePicture'))}</button></div>
       <div class="setting"><span class="label">${esc(t('switchProfile'))}</span><button class="link" data-action="switch-user">${esc(t('switchProfile'))}</button></div>
+    </div>
+    <h3 class="muted" style="margin-top:22px">${esc(t('invites'))}</h3>
+    <div class="settings-group">
+      <div class="setting"><div><div class="label">${esc(t('newInvite'))}</div><div class="hint">${esc(t('inviteHint'))}</div></div><button class="link" data-action="new-invite">${esc(t('newInvite'))}</button></div>
+      ${renderInviteRows()}
     </div>
     <h3 class="muted" style="margin-top:22px">${esc(t('libraryHeading'))}</h3>
     <div class="settings-group">
@@ -1308,6 +1399,9 @@ app.addEventListener('click', (event) => {
       break;
     }
     case 'toggle-autoresume': settings.autoResume = !settings.autoResume; saveSettings(); render(); break;
+    case 'new-invite': createInvite(); break;
+    case 'copy-invite': copyInvite(target.dataset.token); break;
+    case 'revoke-invite': revokeInvite(target.dataset.token); break;
     case 'refresh': loadLibrary().then(() => { render(); toast('✓'); }).catch((err) => toast(`${t('error')}: ${err.message}`)); break;
     case 'clear-cache':
       if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage('clear-cache');

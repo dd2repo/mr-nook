@@ -25,6 +25,11 @@ export default {
     try {
       if (url.pathname.startsWith('/api/')) return await handleApi(request, env, url);
       if (url.pathname.startsWith('/media/')) return await handleMedia(request, env, url);
+      // The invite landing page is public and lives under one static file.
+      if (url.pathname.startsWith('/einladung/')) {
+        // Serve the page itself; the token stays in the address bar for the page to read.
+        return env.ASSETS.fetch(new Request(new URL('/einladung', url), request));
+      }
       return env.ASSETS.fetch(request);
     } catch (err) {
       if (err instanceof HttpError) return json({ error: err.message }, err.status);
@@ -113,9 +118,49 @@ async function handleApi(request, env, url) {
     return json({ ok: true }, 200, { 'set-cookie': cookie });
   }
 
+  // Redeeming an invite is public by design: the token is the credential.
+  if (resource === 'invite' && id === 'redeem' && method === 'POST') {
+    const body = await readJson(request);
+    const token = typeof body.token === 'string' ? body.token.trim() : '';
+    if (!/^[a-f0-9]{32}$/.test(token)) throw new HttpError(400, 'invalid token');
+    const row = await env.DB.prepare('SELECT token, expires_at, used_at FROM invites WHERE token = ?').bind(token).first();
+    if (!row) throw new HttpError(404, 'unknown');
+    if (row.used_at) throw new HttpError(409, 'used');
+    if (row.expires_at < Date.now()) throw new HttpError(410, 'expired');
+    await env.DB.prepare('UPDATE invites SET used_at = ?, used_agent = ? WHERE token = ?')
+      .bind(Date.now(), (request.headers.get('user-agent') || '').slice(0, 200), token).run();
+    const secure = url.protocol === 'https:' ? '; Secure' : '';
+    const cookie = `${COOKIE}=${encodeURIComponent(env.APP_KEY)}; Path=/; Max-Age=${COOKIE_MAX_AGE}; HttpOnly; SameSite=Lax${secure}`;
+    return json({ ok: true }, 200, { 'set-cookie': cookie });
+  }
+
   requireAuth(request, env);
 
   if (resource === 'me' && method === 'GET') return json({ ok: true });
+
+  if (resource === 'invites') {
+    if (method === 'GET' && !id) {
+      const { results } = await env.DB.prepare(
+        'SELECT token, label, created_at, expires_at, used_at FROM invites ORDER BY created_at DESC LIMIT 50',
+      ).all();
+      return json(results);
+    }
+    if (method === 'POST' && !id) {
+      const body = await readJson(request);
+      const label = typeof body.label === 'string' ? body.label.trim().slice(0, 60) : '';
+      const days = Math.min(90, Math.max(1, Number(body.days) || 14));
+      const token = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+      const now = Date.now();
+      await env.DB.prepare('INSERT INTO invites (token, label, created_at, expires_at) VALUES (?, ?, ?, ?)')
+        .bind(token, label, now, now + days * 86400000).run();
+      return json({ token, label, created_at: now, expires_at: now + days * 86400000, used_at: null }, 201);
+    }
+    if (method === 'DELETE' && id) {
+      if (!/^[a-f0-9]{32}$/.test(id)) throw new HttpError(400, 'invalid token');
+      await env.DB.prepare('DELETE FROM invites WHERE token = ?').bind(id).run();
+      return new Response(null, { status: 204 });
+    }
+  }
 
   if (resource === 'users') {
     if (method === 'GET' && !id) {
