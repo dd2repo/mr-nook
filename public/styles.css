@@ -178,7 +178,10 @@ h3 { font-size: 15px; font-weight: 800; margin: 0; }
 .shelf::-webkit-scrollbar { display: none; }
 .shelf .tile { flex: 0 0 132px; scroll-snap-align: start; background: transparent; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 6px; }
 .tile .cover { box-shadow: var(--shadow-soft); }
-.tile .title { font-weight: 700; font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tile .title { font-weight: 700; font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em; }
+/* Fixed text block so covers, authors and progress bars line up across a row. */
+.tile .muted { font-size: 13px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.5em; }
+.grid .tile, .shelf .tile { align-content: start; }
 
 /* library grid & list */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
