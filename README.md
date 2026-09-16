@@ -53,14 +53,34 @@ Without the cookie the API and the audio streams answer 401.
 
 ```bash
 node scripts/books.mjs add "/path/to/Book.mp3" --cover "/path/to/cover.jpg"
-node scripts/books.mjs add "/path/to/Book.mp3" --title "Title" --author "Author"
+node scripts/books.mjs add "/path/to/Book.mp3" --title "Title" --author "Author" --id my-book
+node scripts/books.mjs add "/path/to/Book.mp3" --no-chapter-titles
 node scripts/books.mjs list
 node scripts/books.mjs remove <id>
 ```
 
 The script reads duration, title, author and ID3 chapter marks with `ffprobe`, extracts an
-embedded cover if you pass none, and uploads the audio in 20 MB parts through the Worker
-(no S3 credentials needed). Re-running `add` with the same `--id` replaces the book.
+embedded cover if you pass none, and uploads the audio in four parallel 20 MB parts through
+the Worker (no S3 credentials needed). Re-running `add` with the same `--id` replaces the
+book and keeps listening progress, because progress is keyed on the book id.
+
+### Library conventions
+
+Rips carry whatever the shop wrote into the tags, so titles and covers are normalised by
+hand at upload time and the flags above exist for exactly that:
+
+- **Title**: the work only. No publisher, no platform, no "Ungekürzte Lesung". A dramatised
+  version keeps the German suffix `(Hörspiel)`; series get `Name N – Subtitle` with an
+  en dash, for example `Auris 2 – Die Frequenz des Todes`.
+- **Author**: `First Last`, several authors separated by a comma, pen names in parentheses,
+  for example `Sebastian Fitzek (als Max Rhode)`. Narrators are not authors.
+- **Id**: lowercase slug of the title with umlauts transliterated, stable forever because
+  progress and bookmarks hang off it.
+- **Cover**: square JPEG, 1000x1000. Portrait artwork is centred on a blurred copy of
+  itself rather than stretched or cropped.
+- **Chapter titles**: dropped with `--no-chapter-titles` whenever they are track numbers or
+  internal codes such as `SebFit-DeSeebre - 01_DGW`; the app then labels them `Kapitel N`.
+  Real chapter names are kept.
 
 ## Install on Android
 
