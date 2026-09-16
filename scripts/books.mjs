@@ -115,6 +115,19 @@ function slugify(text) {
     .slice(0, 60) || 'book';
 }
 
+// Small square thumbnail for library tiles, so the grid does not pull full-size covers.
+function makeThumb(file) {
+  const tmp = join(tmpdir(), `thumb-${randomBytes(4).toString('hex')}.jpg`);
+  try {
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', file,
+      '-vf', 'scale=320:320:force_original_aspect_ratio=increase,crop=320:320',
+      '-q:v', '5', tmp], { stdio: 'ignore' });
+    return existsSync(tmp) && statSync(tmp).size > 0 ? tmp : null;
+  } catch {
+    return null;
+  }
+}
+
 function contentTypeFor(file) {
   const ext = extname(file).toLowerCase();
   return { '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.m4b': 'audio/mp4', '.ogg': 'audio/ogg', '.opus': 'audio/ogg', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' }[ext]
@@ -206,6 +219,11 @@ async function add() {
     coverKey = `books/${id}/cover${extname(coverFile).toLowerCase() || '.jpg'}`;
     console.log(`Uploading cover -> ${coverKey}`);
     await uploadSmall(coverFile, coverKey);
+    const thumb = makeThumb(coverFile);
+    if (thumb) {
+      await uploadSmall(thumb, `books/${id}/thumb.jpg`);
+      unlinkSync(thumb);
+    }
     if (coverTmp) unlinkSync(coverTmp);
   }
 

@@ -827,8 +827,10 @@ function renderProfiles() {
   </div>`;
 }
 
+// Tiles and the mini player pull the small thumbnail; large artwork only where it shows.
 function coverHtml(book, cls = 'cover') {
-  if (book.has_cover) return `<img class="${cls}" src="/media/${esc(book.id)}/cover" alt="" loading="lazy">`;
+  const big = cls === 'cover-large';
+  if (book.has_cover) return `<img class="${cls}" src="/media/${esc(book.id)}/${big ? 'cover' : 'thumb'}" alt="" loading="lazy" decoding="async">`;
   return `<div class="${cls}">${esc(initials(book.title))}</div>`;
 }
 function pctOf(book) {

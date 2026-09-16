@@ -446,11 +446,18 @@ async function handleMedia(request, env, url) {
     const user = await env.DB.prepare('SELECT avatar_key FROM users WHERE id = ?').bind(requireInt(second, 'user id')).first();
     key = user ? user.avatar_key : null;
   } else {
-    // /media/:bookId/audio | cover
+    // /media/:bookId/audio | cover | thumb
     const bookId = requireBookId(first);
     const book = await env.DB.prepare('SELECT audio_key, cover_key FROM books WHERE id = ?').bind(bookId).first();
     if (!book) throw new HttpError(404, 'book not found');
-    key = kind === 'audio' ? book.audio_key : kind === 'cover' ? book.cover_key : null;
+    if (kind === 'audio') key = book.audio_key;
+    else if (kind === 'cover') key = book.cover_key;
+    else if (kind === 'thumb') {
+      // Grid tiles use a small derived object; books added before thumbnails fall back.
+      key = book.cover_key ? `books/${bookId}/thumb.jpg` : null;
+      if (key && !(await env.BUCKET.head(key))) key = book.cover_key;
+      kind = 'cover';
+    }
   }
   if (!key) throw new HttpError(404, 'not found');
 

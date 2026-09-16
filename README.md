@@ -77,7 +77,8 @@ hand at upload time and the flags above exist for exactly that:
 - **Id**: lowercase slug of the title with umlauts transliterated, stable forever because
   progress and bookmarks hang off it.
 - **Cover**: square JPEG, 1000x1000. Portrait artwork is centred on a blurred copy of
-  itself rather than stretched or cropped.
+  itself rather than stretched or cropped. The upload also stores a 320px thumbnail next to
+  it, which is what grids, lists and the mini player load.
 - **Chapter titles**: dropped with `--no-chapter-titles` whenever they are track numbers or
   internal codes such as `SebFit-DeSeebre - 01_DGW`; the app then labels them `Kapitel N`.
   Real chapter names are kept.
