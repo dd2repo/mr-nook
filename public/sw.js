@@ -1,6 +1,10 @@
-// Service worker: caches the app shell so the PWA installs and opens fast.
-// Audio and covers (/media/*) and data (/api/*) are never cached.
-const VERSION = 'mr-nook-v6';
+// Service worker: caches the app shell, and serves downloaded audiobooks from disk.
+//
+// A downloaded book is stored as one full response in AUDIO_CACHE. The audio element always
+// asks for byte ranges, so a cached book gets sliced here and handed back as a 206. Books
+// that were not downloaded go straight to the network.
+const VERSION = 'mr-nook-v9';
+const AUDIO_CACHE = 'mr-nook-audio';
 const SHELL = [
   '/',
   '/index.html',
@@ -24,16 +28,49 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      // Downloaded books survive app updates; only stale shell caches go.
+      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION && k !== AUDIO_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
 
 self.addEventListener('message', (event) => {
   if (event.data === 'clear-cache') {
-    event.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))));
+    // Downloads are the user's data, not cache, so they stay.
+    event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== AUDIO_CACHE).map((k) => caches.delete(k)))));
   }
 });
+
+// Serves a byte range out of a full cached response.
+async function rangeFromCache(cached, rangeHeader) {
+  const buffer = await cached.arrayBuffer();
+  const size = buffer.byteLength;
+  const type = cached.headers.get('content-type') || 'audio/mpeg';
+  const base = { 'content-type': type, 'accept-ranges': 'bytes', 'x-mr-nook-source': 'download' };
+  const match = /^bytes=(\d*)-(\d*)$/.exec((rangeHeader || '').trim());
+
+  if (!match || (match[1] === '' && match[2] === '')) {
+    return new Response(buffer, { status: 200, headers: { ...base, 'content-length': String(size) } });
+  }
+
+  let start;
+  let end;
+  if (match[1] === '') {
+    const suffix = Math.min(Number(match[2]), size);
+    start = size - suffix;
+    end = size - 1;
+  } else {
+    start = Number(match[1]);
+    end = match[2] === '' ? size - 1 : Math.min(Number(match[2]), size - 1);
+  }
+  if (!(start >= 0) || start >= size || end < start) {
+    return new Response(null, { status: 416, headers: { ...base, 'content-range': `bytes */${size}` } });
+  }
+  return new Response(buffer.slice(start, end + 1), {
+    status: 206,
+    headers: { ...base, 'content-length': String(end - start + 1), 'content-range': `bytes ${start}-${end}/${size}` },
+  });
+}
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -41,13 +78,22 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
+
   if (url.pathname.startsWith('/media/')) {
-    // Pass media through untouched (Range requests included), never cache it.
-    event.respondWith(fetch(request));
+    if (!url.pathname.endsWith('/audio')) {
+      event.respondWith(fetch(request));
+      return;
+    }
+    event.respondWith((async () => {
+      const cache = await caches.open(AUDIO_CACHE);
+      const cached = await cache.match(url.pathname);
+      if (cached) return rangeFromCache(cached, request.headers.get('range'));
+      return fetch(request);
+    })());
     return;
   }
 
-  // Network first, cache fallback (keeps the shell fresh but usable offline).
+  // App shell: network first, cache fallback.
   event.respondWith(
     fetch(request)
       .then((response) => {

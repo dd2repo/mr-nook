@@ -223,7 +223,68 @@ async function handleApi(request, env, url) {
     return saveFavorite(env, await readJson(request));
   }
 
+  if (resource === 'sleep-sessions') {
+    if (method === 'GET' && !id) return listSleepSessions(env, url);
+    if (method === 'POST' && !id) return createSleepSession(env, await readJson(request));
+    if (method === 'DELETE' && id) return deleteSleepSession(env, id);
+  }
+
+  if (resource === 'reviews') {
+    if (method === 'GET' && !id) return listReviews(env, url);
+    if ((method === 'PUT' || method === 'POST') && !id) return saveReview(env, await readJson(request));
+    if (method === 'DELETE' && !id) return deleteReview(env, url);
+  }
+
   if (resource === 'search' && method === 'GET' && !id) return searchBooks(env, url);
+
+  // What the browser and Cloudflare actually negotiated for this connection.
+  if (resource === 'security' && method === 'GET') {
+    const cf = request.cf || {};
+    return json({
+      https: url.protocol === 'https:',
+      tls_version: cf.tlsVersion || null,
+      tls_cipher: cf.tlsCipher || null,
+      http_version: cf.httpProtocol || null,
+    });
+  }
+
+  if (resource === 'wishes') {
+    if (method === 'GET' && !id) {
+      const { results } = await env.DB.prepare(
+        `SELECT w.id, w.user_id, w.title, w.author, w.note, w.status, w.created_at, w.done_at, u.name AS user_name
+           FROM wishes w JOIN users u ON u.id = w.user_id
+          ORDER BY (w.status = 'done'), w.created_at DESC LIMIT 100`,
+      ).all();
+      return json(results);
+    }
+    if (method === 'POST' && !id) {
+      const body = await readJson(request);
+      const title = typeof body.title === 'string' ? body.title.trim().slice(0, 200) : '';
+      if (!title) throw new HttpError(400, 'title is required');
+      const row = await env.DB.prepare(
+        `INSERT INTO wishes (user_id, title, author, note, created_at) VALUES (?, ?, ?, ?, ?)
+         RETURNING id, user_id, title, author, note, status, created_at, done_at`,
+      ).bind(
+        requireInt(body.user_id, 'user_id'),
+        title,
+        typeof body.author === 'string' ? body.author.trim().slice(0, 200) : '',
+        typeof body.note === 'string' ? body.note.trim().slice(0, 500) : '',
+        Date.now(),
+      ).first();
+      return json(row, 201);
+    }
+    if (method === 'PATCH' && id) {
+      const body = await readJson(request);
+      const done = body.status === 'done';
+      await env.DB.prepare('UPDATE wishes SET status = ?, done_at = ? WHERE id = ?')
+        .bind(done ? 'done' : 'open', done ? Date.now() : null, requireInt(id, 'wish id')).run();
+      return json({ ok: true, status: done ? 'done' : 'open' });
+    }
+    if (method === 'DELETE' && id) {
+      await env.DB.prepare('DELETE FROM wishes WHERE id = ?').bind(requireInt(id, 'wish id')).run();
+      return new Response(null, { status: 204 });
+    }
+  }
 
   if (resource === 'bookmarks') {
     if (method === 'GET' && !id) return listBookmarks(env, url);
@@ -244,6 +305,7 @@ const BOOK_LIST_SELECT = `
   SELECT b.id, b.title, b.author, b.duration_sec, b.size_bytes, b.created_at,
          (b.cover_key IS NOT NULL) AS has_cover,
          (SELECT COUNT(*) FROM chapters c WHERE c.book_id = b.id) AS chapter_count,
+         (SELECT ROUND(AVG(rating), 1) FROM reviews r WHERE r.book_id = b.id) AS rating,
          p.position_sec, p.finished, p.favorite, p.updated_at AS last_played
     FROM books b
     LEFT JOIN progress p ON p.book_id = b.id AND p.user_id = ?`;
@@ -264,7 +326,6 @@ async function searchBooks(env, url) {
   const { results } = await env.DB.prepare(
     `${BOOK_LIST_SELECT}
       WHERE b.title LIKE ?2 ESCAPE '\\' OR b.author LIKE ?2 ESCAPE '\\'
-         OR EXISTS (SELECT 1 FROM chapters c WHERE c.book_id = b.id AND c.title LIKE ?2 ESCAPE '\\')
       ORDER BY b.title`,
   ).bind(userId, like).all();
   return json(results);
@@ -289,16 +350,25 @@ async function getBook(env, url, bookId) {
   ).bind(bookId).first();
   if (!book) throw new HttpError(404, 'book not found');
 
-  const [chapters, bookmarks, progress] = await env.DB.batch([
+  const [chapters, bookmarks, progress, sleeps, reviews] = await env.DB.batch([
     env.DB.prepare('SELECT id, idx, title, start_sec FROM chapters WHERE book_id = ? ORDER BY idx').bind(bookId),
     env.DB.prepare('SELECT id, position_sec, note, created_at FROM bookmarks WHERE book_id = ? AND user_id = ? ORDER BY position_sec').bind(bookId, userId),
     env.DB.prepare('SELECT position_sec, finished, favorite, updated_at FROM progress WHERE book_id = ? AND user_id = ?').bind(bookId, userId),
+    env.DB.prepare(
+      'SELECT id, started_sec, stopped_sec, kind, stopped_at FROM sleep_sessions WHERE user_id = ? AND book_id = ? ORDER BY stopped_at DESC LIMIT 5',
+    ).bind(userId, bookId),
+    env.DB.prepare(
+      `SELECT r.user_id, r.rating, r.text, r.updated_at, u.name AS user_name
+         FROM reviews r JOIN users u ON u.id = r.user_id WHERE r.book_id = ? ORDER BY r.updated_at DESC`,
+    ).bind(bookId),
   ]);
   return json({
     ...book,
     chapters: chapters.results,
     bookmarks: bookmarks.results,
     progress: progress.results[0] || null,
+    sleep_sessions: sleeps.results,
+    reviews: reviews.results,
   });
 }
 
@@ -371,6 +441,80 @@ async function deleteBook(env, bookId) {
     env.DB.prepare('DELETE FROM chapters WHERE book_id = ?').bind(bookId),
     env.DB.prepare('DELETE FROM books WHERE id = ?').bind(bookId),
   ]);
+  return new Response(null, { status: 204 });
+}
+
+// One row per sleep timer run: awake at started_sec, asleep somewhere before stopped_sec.
+async function createSleepSession(env, body) {
+  const userId = requireInt(body.user_id, 'user_id');
+  const bookId = requireBookId(body.book_id);
+  const started = requireNumber(body.started_sec, 'started_sec');
+  const stopped = requireNumber(body.stopped_sec, 'stopped_sec');
+  const kind = body.kind === 'chapter' ? 'chapter' : 'timer';
+  const now = Date.now();
+  const row = await env.DB.prepare(
+    `INSERT INTO sleep_sessions (user_id, book_id, started_sec, stopped_sec, kind, started_at, stopped_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     RETURNING id, book_id, started_sec, stopped_sec, kind, started_at, stopped_at`,
+  ).bind(userId, bookId, started, stopped, kind, Number(body.started_at) || now, now).first();
+  // Keep the list short; only the recent nights are useful.
+  await env.DB.prepare(
+    `DELETE FROM sleep_sessions WHERE user_id = ?1 AND book_id = ?2 AND id NOT IN
+       (SELECT id FROM sleep_sessions WHERE user_id = ?1 AND book_id = ?2 ORDER BY stopped_at DESC LIMIT 20)`,
+  ).bind(userId, bookId).run();
+  return json(row, 201);
+}
+
+async function listSleepSessions(env, url) {
+  const userId = requireInt(url.searchParams.get('user'), 'user');
+  const bookId = requireBookId(url.searchParams.get('book'));
+  const { results } = await env.DB.prepare(
+    `SELECT id, started_sec, stopped_sec, kind, started_at, stopped_at
+       FROM sleep_sessions WHERE user_id = ? AND book_id = ? ORDER BY stopped_at DESC LIMIT 20`,
+  ).bind(userId, bookId).all();
+  return json(results);
+}
+
+async function deleteSleepSession(env, id) {
+  await env.DB.prepare('DELETE FROM sleep_sessions WHERE id = ?').bind(requireInt(id, 'session id')).run();
+  return new Response(null, { status: 204 });
+}
+
+async function listReviews(env, url) {
+  const bookId = url.searchParams.get('book');
+  const where = bookId ? 'WHERE r.book_id = ?1' : '';
+  const stmt = env.DB.prepare(
+    `SELECT r.user_id, r.book_id, r.rating, r.text, r.updated_at, u.name AS user_name, b.title AS book_title,
+            (b.cover_key IS NOT NULL) AS has_cover
+       FROM reviews r JOIN users u ON u.id = r.user_id JOIN books b ON b.id = r.book_id
+       ${where}
+      ORDER BY r.updated_at DESC LIMIT 100`,
+  );
+  const { results } = await (bookId ? stmt.bind(requireBookId(bookId)) : stmt).all();
+  return json(results);
+}
+
+async function saveReview(env, body) {
+  const userId = requireInt(body.user_id, 'user_id');
+  const bookId = requireBookId(body.book_id);
+  const rating = requireInt(body.rating, 'rating');
+  if (rating < 1 || rating > 5) throw new HttpError(400, 'rating must be between 1 and 5');
+  // A review only counts once the book was actually finished.
+  const progress = await env.DB.prepare('SELECT finished FROM progress WHERE user_id = ? AND book_id = ?')
+    .bind(userId, bookId).first();
+  if (!progress || !progress.finished) throw new HttpError(403, 'finish the book first');
+  const now = Date.now();
+  await env.DB.prepare(
+    `INSERT INTO reviews (user_id, book_id, rating, text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(user_id, book_id) DO UPDATE SET rating = excluded.rating, text = excluded.text, updated_at = excluded.updated_at`,
+  ).bind(userId, bookId, rating, typeof body.text === 'string' ? body.text.trim().slice(0, 1000) : '', now, now).run();
+  return json({ ok: true, rating });
+}
+
+async function deleteReview(env, url) {
+  const userId = requireInt(url.searchParams.get('user'), 'user');
+  const bookId = requireBookId(url.searchParams.get('book'));
+  await env.DB.prepare('DELETE FROM reviews WHERE user_id = ? AND book_id = ?').bind(userId, bookId).run();
   return new Response(null, { status: 204 });
 }
 

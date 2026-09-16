@@ -4,7 +4,7 @@
 const audio = document.getElementById('audio');
 const app = document.getElementById('app');
 
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.8.0';
 const GITHUB_URL = 'https://github.com/dd2repo/mr-nook';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 const SKIP_BACK_OPTIONS = [10, 15, 30];
@@ -51,7 +51,7 @@ const STRINGS = {
     pickSomething: 'Such dir etwas aus der Bibliothek aus.',
     addAudiobook: 'Hörbuch hinzufügen',
     addHint: 'Hörbücher kommen über das Skript auf dem Mac in den Nook. Eine MP3 pro Buch, Cover optional:',
-    searchPlaceholder: 'Titel, Autor oder Kapitel',
+    searchPlaceholder: 'Titel oder Autor',
     play: 'Abspielen',
     resume: 'Weiterhören',
     startOver: 'Von Anfang',
@@ -66,6 +66,58 @@ const STRINGS = {
     fullBook: 'Ganzes Buch',
     bookmarks: 'Lesezeichen',
     addBookmark: 'Lesezeichen',
+    addBookmarkHere: 'Hier Lesezeichen setzen',
+    streaming: 'Wird gestreamt',
+    downloaded: 'Auf dem Gerät',
+    download: 'Herunterladen',
+    downloading: 'Lädt',
+    cancel: 'Abbrechen',
+    removeDownload: 'Vom Gerät löschen',
+    downloadDone: 'Steht offline bereit',
+    downloadFailed: 'Download fehlgeschlagen',
+    downloadRemoved: 'Vom Gerät gelöscht',
+    notEnoughSpace: 'Zu wenig Speicher frei',
+    offlineHint: 'Offline hörbar, kein Datenverbrauch.',
+    streamHint: 'Wird über das Internet geladen.',
+    wishes: 'Wünsche',
+    wishBook: 'Buch wünschen',
+    wishHint: 'Fehlt dir etwas? Schreib es auf, es landet auf der Liste.',
+    wishTitle: 'Titel',
+    wishAuthor: 'Autor',
+    wishNote: 'Notiz',
+    wishSend: 'Auf die Liste',
+    wishAdded: 'Steht auf der Liste',
+    noWishes: 'Keine offenen Wünsche.',
+    markDone: 'Erledigt',
+    reopen: 'Wieder öffnen',
+    wishFrom: 'von',
+    security: 'Verbindung',
+    encrypted: 'Verschlüsselt',
+    notEncrypted: 'Nicht verschlüsselt',
+    securityHint: 'Streams und Downloads laufen über diese verschlüsselte Verbindung.',
+    sleepHistory: 'Einschlaf-Verlauf',
+    sleepHistoryHint: 'Beim Start warst du noch wach. Irgendwo bis zum Ende bist du weg.',
+    awakeAt: 'wach bei',
+    ranUntil: 'lief bis',
+    jumpBack: 'Dorthin springen',
+    noSleepHistory: 'Noch nichts eingeschlafen.',
+    rating: 'Bewertung',
+    yourRating: 'Deine Bewertung',
+    rateHint: 'Bewerten kannst du, wenn du das Buch durch hast.',
+    reviewPlaceholder: 'Was hat dir gefallen?',
+    saveReview: 'Speichern',
+    reviewSaved: 'Danke!',
+    deleteReview: 'Bewertung löschen',
+    nooks: 'Nooks',
+    noReviews: 'Noch keine Bewertungen.',
+    reviews: 'Bewertungen',
+    searchPlaceholderShort: 'Titel oder Autor',
+    hidePlayer: 'Wegwischen',
+    atRest: 'Die Dateien liegen bei Cloudflare R2 verschlüsselt (AES-256).',
+    bookmarkDeleted: 'Lesezeichen gelöscht',
+    noBookmarks: 'Noch keine Lesezeichen in diesem Buch.',
+    showThem: 'Anzeigen',
+    undo: 'Rückgängig',
     bookmarkAdded: 'Lesezeichen gesetzt',
     notePlaceholder: 'Notiz …',
     delete: 'Löschen',
@@ -159,7 +211,7 @@ const STRINGS = {
     pickSomething: 'Pick something from your library.',
     addAudiobook: 'Add audiobook',
     addHint: 'Audiobooks reach the nook through the script on the Mac. One MP3 per book, cover optional:',
-    searchPlaceholder: 'Title, author or chapter',
+    searchPlaceholder: 'Title or author',
     play: 'Play',
     resume: 'Continue',
     startOver: 'Start over',
@@ -174,6 +226,58 @@ const STRINGS = {
     fullBook: 'Full book',
     bookmarks: 'Bookmarks',
     addBookmark: 'Bookmark',
+    addBookmarkHere: 'Bookmark this spot',
+    streaming: 'Streaming',
+    downloaded: 'On this device',
+    download: 'Download',
+    downloading: 'Downloading',
+    cancel: 'Cancel',
+    removeDownload: 'Remove from device',
+    downloadDone: 'Available offline',
+    downloadFailed: 'Download failed',
+    downloadRemoved: 'Removed from device',
+    notEnoughSpace: 'Not enough free space',
+    offlineHint: 'Plays offline, uses no data.',
+    streamHint: 'Loaded over the internet.',
+    wishes: 'Wishes',
+    wishBook: 'Wish for a book',
+    wishHint: 'Missing something? Write it down and it lands on the list.',
+    wishTitle: 'Title',
+    wishAuthor: 'Author',
+    wishNote: 'Note',
+    wishSend: 'Add to list',
+    wishAdded: 'On the list',
+    noWishes: 'No open wishes.',
+    markDone: 'Done',
+    reopen: 'Reopen',
+    wishFrom: 'from',
+    security: 'Connection',
+    encrypted: 'Encrypted',
+    notEncrypted: 'Not encrypted',
+    securityHint: 'Streams and downloads run over this encrypted connection.',
+    sleepHistory: 'Sleep history',
+    sleepHistoryHint: 'You were still awake at the start. Somewhere before the end you were gone.',
+    awakeAt: 'awake at',
+    ranUntil: 'ran until',
+    jumpBack: 'Jump there',
+    noSleepHistory: 'No sleep sessions yet.',
+    rating: 'Rating',
+    yourRating: 'Your rating',
+    rateHint: 'You can rate once you have finished the book.',
+    reviewPlaceholder: 'What did you like?',
+    saveReview: 'Save',
+    reviewSaved: 'Thank you!',
+    deleteReview: 'Delete rating',
+    nooks: 'Nooks',
+    noReviews: 'No ratings yet.',
+    reviews: 'Reviews',
+    searchPlaceholderShort: 'Title or author',
+    hidePlayer: 'Swipe away',
+    atRest: 'Files are stored encrypted on Cloudflare R2 (AES-256).',
+    bookmarkDeleted: 'Bookmark deleted',
+    noBookmarks: 'No bookmarks in this book yet.',
+    showThem: 'Show',
+    undo: 'Undo',
     bookmarkAdded: 'Bookmark added',
     notePlaceholder: 'Note …',
     delete: 'Delete',
@@ -260,6 +364,12 @@ const state = {
   showTotal: false,
   avatarVersion: Date.now(),
   invites: null,
+  wishes: null,
+  downloads: new Set(),
+  downloading: null,   // { bookId, pct, controller }
+  security: null,
+  miniCollapsed: false,
+  sleepRun: null,   // { bookId, startedSec, startedAt, kind }
 };
 
 function readJson(key) {
@@ -298,13 +408,114 @@ function fmtDuration(seconds) {
 function initials(text) {
   return String(text || '?').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
 }
-function greeting() {
+// Mr. Nook says one of these under the greeting; picked per daypart, changes each hour.
+const SAYINGS = {
+  de: {
+    morning: [
+      'Der Kessel pfeift gleich.',
+      'Erst ein Kapitel, dann der Tag.',
+      'Die Decke liegt noch bereit.',
+      'Guten Morgen, die Seiten warten.',
+      'Noch fünf Minuten liegen bleiben zählt auch.',
+      'Kaffee in die Tasse, Geschichte ins Ohr.',
+      'Langsam anfangen ist auch anfangen.',
+      'Das Sofa hat auf dich gewartet.',
+    ],
+    day: [
+      'Kurze Pause? Ein Kapitel passt immer.',
+      'Ohren auf, Schultern runter.',
+      'Zeit für eine kleine Fluchtgeschichte.',
+      'Der Sessel ist frei.',
+      'Ein Schluck Tee, ein paar Seiten.',
+      'Zwischendurch hören zählt doppelt.',
+      'Der Stapel wird nicht kleiner von allein.',
+      'Draußen lärmt es, hier drinnen nicht.',
+    ],
+    evening: [
+      'Mach es dir gemütlich heute Abend.',
+      'Licht gedimmt, Decke drüber.',
+      'Der beste Teil vom Tag beginnt jetzt.',
+      'Füße hoch, die Geschichte übernimmt.',
+      'Nur noch ein Kapitel, versprochen.',
+      'Die Welt kann kurz warten.',
+      'Warmes Licht, warme Stimme.',
+      'Zeit, in den Sessel zu sinken.',
+    ],
+    night: [
+      'Leise weiterhören, bis die Augen zufallen.',
+      'Der Sleep-Timer passt auf dich auf.',
+      'Kissen zurecht, Geschichte an.',
+      'Gute Nacht, ich mach das Licht aus.',
+      'Träum was Schönes, Kapitel für Kapitel.',
+      'Die Nacht ist lang genug für ein Kapitel.',
+      'Ganz leise jetzt.',
+      'Schlaf gut, ich bin gleich still.',
+    ],
+  },
+  en: {
+    morning: [
+      'The kettle is nearly there.',
+      'One chapter first, then the day.',
+      'The blanket is still right here.',
+      'Good morning, the pages are waiting.',
+      'Five more minutes counts too.',
+      'Coffee in the cup, a story in your ear.',
+      'Starting slowly is still starting.',
+      'The sofa saved you a seat.',
+    ],
+    day: [
+      'A short break? A chapter always fits.',
+      'Ears open, shoulders down.',
+      'Time for a small escape.',
+      'The armchair is free.',
+      'A sip of tea, a few pages.',
+      'Listening mid-day counts double.',
+      'The pile will not shrink on its own.',
+      'It is loud out there, not in here.',
+    ],
+    evening: [
+      'Make yourself cosy tonight.',
+      'Lights low, blanket on.',
+      'The best part of the day starts now.',
+      'Feet up, the story takes over.',
+      'Just one more chapter, promise.',
+      'The world can wait a moment.',
+      'Warm light, warm voice.',
+      'Time to sink into the chair.',
+    ],
+    night: [
+      'Keep listening softly until your eyes close.',
+      'The sleep timer is watching over you.',
+      'Pillow sorted, story on.',
+      'Good night, I will get the light.',
+      'Sweet dreams, chapter by chapter.',
+      'The night is long enough for one chapter.',
+      'Very quietly now.',
+      'Sleep well, I will hush in a moment.',
+    ],
+  },
+};
+
+function daypart() {
   const h = new Date().getHours();
-  if (h < 5) return t('night');
-  if (h < 11) return t('morning');
-  if (h < 17) return t('day');
-  if (h < 23) return t('evening');
-  return t('night');
+  if (h < 5) return 'night';
+  if (h < 11) return 'morning';
+  if (h < 17) return 'day';
+  if (h < 23) return 'evening';
+  return 'night';
+}
+
+function saying() {
+  const table = SAYINGS[state.lang] || SAYINGS.de;
+  const list = table[daypart()];
+  const now = new Date();
+  // Stable within the hour, so it does not flicker on every re-render.
+  const seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate() + now.getHours() * 7;
+  return list[seed % list.length];
+}
+
+function greeting() {
+  return t(daypart());
 }
 
 // ------------------------------------------------------------------ icons
@@ -333,6 +544,13 @@ const ICON = {
   pencil: '<svg viewBox="0 0 24 24"><path d="M4 20h4l10.5-10.5a2 2 0 0 0-2.8-2.8L5 17.2z"/><path d="m13.5 8.5 2.8 2.8"/></svg>',
   close: '<svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>',
   plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  cloud: '<svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 11a3.5 3.5 0 0 0 1 7z"/></svg>',
+  down: '<svg viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></svg>',
+  downloadIcon: '<svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7.5 11 4.5 4.5 4.5-4.5"/><path d="M5 19h14"/></svg>',
+  phone: '<svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M5 7h14"/><path d="M9 7V5h6v2"/><path d="M7 7v12.5h10V7"/><path d="M10.5 10.5v6M13.5 10.5v6"/></svg>',
+  lock: '<svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg>',
+  star: '<svg viewBox="0 0 24 24"><path d="m12 4 2.4 5 5.6.7-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.7z"/></svg>',
 };
 
 // ------------------------------------------------------------------- API
@@ -390,6 +608,7 @@ async function boot() {
     await enterApp();
   }
   window.addEventListener('hashchange', route);
+  loadDownloads().then(render).catch(() => {});
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
@@ -436,7 +655,7 @@ async function route() {
   if (['home', 'library', 'search', 'settings'].includes(screen)) {
     state.screen = screen;
     if (screen === 'home' || screen === 'library') loadLibrary().then(render).catch(() => {});
-    if (screen === 'settings') loadInvites();
+    if (screen === 'settings') { loadInvites(); loadWishes(); loadSecurity(); }
     render();
     if (screen === 'search') {
       const input = document.getElementById('q');
@@ -679,8 +898,33 @@ function setSleep(option) {
   if (option === -1) state.sleep = { until: 0, endOfChapter: true, startChapter: chapterIndexAt(state.now, audio.currentTime), minutes: -1 };
   else if (option > 0) state.sleep = { until: Date.now() + option * 60000, endOfChapter: false, startChapter: -1, minutes: option };
   else state.sleep = { until: 0, endOfChapter: false, startChapter: -1, minutes: 0 };
+  // Remember where you were still awake, so the run can be written down later.
+  if (option !== 0 && state.now) {
+    state.sleepRun = { bookId: state.now.id, startedSec: audio.currentTime, startedAt: Date.now(), kind: option === -1 ? 'chapter' : 'timer' };
+  } else {
+    state.sleepRun = null;
+  }
   closeSheet();
   render();
+}
+
+// Called when the timer actually pauses playback.
+async function recordSleepRun() {
+  const run = state.sleepRun;
+  state.sleepRun = null;
+  if (!run || !state.now || state.now.id !== run.bookId) return;
+  const stopped = audio.currentTime;
+  if (stopped - run.startedSec < 30) return;   // too short to be worth remembering
+  try {
+    const row = await api('/sleep-sessions', {
+      method: 'POST',
+      body: { user_id: state.user.id, book_id: run.bookId, started_sec: run.startedSec, stopped_sec: stopped, kind: run.kind, started_at: run.startedAt },
+    });
+    for (const d of [state.now, state.detail]) {
+      if (d && d.id === run.bookId) d.sleep_sessions = [row, ...(d.sleep_sessions || [])].slice(0, 5);
+    }
+    render();
+  } catch { /* not worth bothering the listener */ }
 }
 function sleepActive() {
   return state.sleep.until > 0 || state.sleep.endOfChapter;
@@ -693,7 +937,7 @@ function sleepLabel() {
 setInterval(() => {
   if (state.sleep.until > 0) {
     const remaining = state.sleep.until - Date.now();
-    if (remaining <= 0) { audio.pause(); setSleep(0); return; }
+    if (remaining <= 0) { audio.pause(); recordSleepRun(); setSleep(0); return; }
     if (!audio.paused && remaining < SLEEP_FADE_MS) audio.volume = Math.max(0.05, remaining / SLEEP_FADE_MS);
   }
   const label = document.getElementById('sleep-label');
@@ -715,8 +959,8 @@ async function addBookmark() {
         d.bookmarks.sort((a, b) => a.position_sec - b.position_sec);
       }
     }
-    toast(t('bookmarkAdded'));
     render();
+    toast(t('bookmarkAdded'), t('showThem'), () => openSheet({ type: 'bookmarks', bookId: state.now.id }));
   } catch (err) {
     toast(`${t('error')}: ${err.message}`);
   }
@@ -729,9 +973,36 @@ function updateBookmarkNote(id, note) {
   api(`/bookmarks/${id}`, { method: 'PATCH', body: { note } }).catch((err) => toast(`${t('error')}: ${err.message}`));
 }
 function deleteBookmark(id) {
-  for (const d of [state.now, state.detail]) if (d && d.bookmarks) d.bookmarks = d.bookmarks.filter((b) => b.id !== id);
+  let removed = null;
+  let bookId = null;
+  for (const d of [state.now, state.detail]) {
+    if (!d || !d.bookmarks) continue;
+    const hit = d.bookmarks.find((b) => b.id === id);
+    if (hit) { removed = hit; bookId = d.id; }
+    d.bookmarks = d.bookmarks.filter((b) => b.id !== id);
+  }
   render();
   api(`/bookmarks/${id}`, { method: 'DELETE' }).catch((err) => toast(`${t('error')}: ${err.message}`));
+  if (removed) toast(t('bookmarkDeleted'), t('undo'), () => restoreBookmark(bookId, removed));
+}
+
+// Undo re-creates the row; the id changes, which nothing depends on.
+async function restoreBookmark(bookId, bookmark) {
+  try {
+    const row = await api('/bookmarks', {
+      method: 'POST',
+      body: { user_id: state.user.id, book_id: bookId, position_sec: bookmark.position_sec, note: bookmark.note || '' },
+    });
+    for (const d of [state.now, state.detail]) {
+      if (d && d.id === bookId && d.bookmarks && !d.bookmarks.some((b) => b.id === row.id)) {
+        d.bookmarks.push(row);
+        d.bookmarks.sort((a, b) => a.position_sec - b.position_sec);
+      }
+    }
+    render();
+  } catch (err) {
+    toast(`${t('error')}: ${err.message}`);
+  }
 }
 
 // ---- media session
@@ -770,6 +1041,7 @@ audio.addEventListener('timeupdate', () => {
   saveProgress(false);
   if (state.sleep.endOfChapter && !audio.paused && chapterIndexAt(state.now, audio.currentTime) !== state.sleep.startChapter) {
     audio.pause();
+    recordSleepRun();
     setSleep(0);
   }
 });
@@ -781,6 +1053,242 @@ audio.addEventListener('ended', () => { saveProgress(true); render(); });
 audio.addEventListener('error', () => { if (state.now) toast(`${t('error')}: audio ${audio.error ? audio.error.code : ''}`); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveProgress(true, true); });
 window.addEventListener('pagehide', () => saveProgress(true, true));
+
+// ------------------------------------------------------------- downloads
+// A downloaded book lives in the Cache API under its media path. The service worker answers
+// range requests from there, so playback never touches the network again.
+
+const AUDIO_CACHE = 'mr-nook-audio';
+
+function audioPath(bookId) {
+  return `/media/${bookId}/audio`;
+}
+
+async function loadDownloads() {
+  if (!('caches' in window)) return;
+  try {
+    const cache = await caches.open(AUDIO_CACHE);
+    const keys = await cache.keys();
+    state.downloads = new Set(keys.map((req) => new URL(req.url).pathname.split('/')[2]).filter(Boolean));
+  } catch { /* storage unavailable */ }
+}
+
+function isDownloaded(bookId) {
+  return state.downloads.has(bookId);
+}
+
+async function downloadBook(book) {
+  if (!book || state.downloading) return;
+  if (!('caches' in window)) return toast(t('downloadFailed'));
+
+  const needed = Number(book.size_bytes) || 0;
+  if (navigator.storage && navigator.storage.estimate && needed) {
+    try {
+      const { quota = 0, usage = 0 } = await navigator.storage.estimate();
+      if (quota && quota - usage < needed * 1.1) return toast(t('notEnoughSpace'));
+    } catch { /* estimate is advisory */ }
+  }
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+  const controller = new AbortController();
+  state.downloading = { bookId: book.id, pct: 0, controller };
+  render();
+
+  try {
+    const res = await fetch(audioPath(book.id), { credentials: 'same-origin', signal: controller.signal });
+    if (!res.ok || !res.body) throw new Error(String(res.status));
+    const total = Number(res.headers.get('content-length')) || needed;
+    let loaded = 0;
+    let lastPaint = 0;
+
+    // Count bytes as they flow into the cache instead of buffering the whole book.
+    const meter = new TransformStream({
+      transform(chunk, ctrl) {
+        loaded += chunk.byteLength;
+        const pct = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+        if (state.downloading && pct !== state.downloading.pct && Date.now() - lastPaint > 250) {
+          lastPaint = Date.now();
+          state.downloading.pct = pct;
+          updateDownloadUi();
+        }
+        ctrl.enqueue(chunk);
+      },
+    });
+
+    const headers = new Headers({ 'content-type': res.headers.get('content-type') || 'audio/mpeg' });
+    const cache = await caches.open(AUDIO_CACHE);
+    await cache.put(audioPath(book.id), new Response(res.body.pipeThrough(meter), { status: 200, headers }));
+
+    state.downloads.add(book.id);
+    state.downloading = null;
+    render();
+    toast(t('downloadDone'));
+  } catch (err) {
+    state.downloading = null;
+    await caches.open(AUDIO_CACHE).then((c) => c.delete(audioPath(book.id))).catch(() => {});
+    render();
+    if (err.name !== 'AbortError') toast(`${t('downloadFailed')}: ${err.message}`);
+  }
+}
+
+function cancelDownload() {
+  if (state.downloading) state.downloading.controller.abort();
+}
+
+async function removeDownload(bookId) {
+  try {
+    const cache = await caches.open(AUDIO_CACHE);
+    await cache.delete(audioPath(bookId));
+  } catch { /* ignore */ }
+  state.downloads.delete(bookId);
+  render();
+  toast(t('downloadRemoved'));
+}
+
+function updateDownloadUi() {
+  const bar = document.getElementById('dl-bar');
+  const label = document.getElementById('dl-label');
+  const pct = state.downloading ? state.downloading.pct : 0;
+  if (bar) bar.style.width = `${pct}%`;
+  if (label) label.textContent = `${t('downloading')} ${pct} %`;
+}
+
+function fmtBytes(bytes) {
+  const mb = (Number(bytes) || 0) / 1048576;
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
+}
+
+// ---------------------------------------------------------------- wishes
+
+async function loadWishes() {
+  try {
+    state.wishes = await api('/wishes');
+    render();
+  } catch { /* ignore */ }
+}
+
+async function submitWish() {
+  const title = (document.getElementById('wish-title') || {}).value || '';
+  const author = (document.getElementById('wish-author') || {}).value || '';
+  const note = (document.getElementById('wish-note') || {}).value || '';
+  if (!title.trim()) return;
+  try {
+    const row = await api('/wishes', {
+      method: 'POST',
+      body: { user_id: state.user.id, title: title.trim(), author: author.trim(), note: note.trim() },
+    });
+    state.wishes = [{ ...row, user_name: state.user.name }, ...(state.wishes || [])];
+    closeSheet();
+    toast(t('wishAdded'));
+  } catch (err) {
+    toast(`${t('error')}: ${err.message}`);
+  }
+}
+
+function setWishStatus(id, status) {
+  const wish = (state.wishes || []).find((w) => w.id === id);
+  if (wish) wish.status = status;
+  render();
+  api(`/wishes/${id}`, { method: 'PATCH', body: { status } }).catch((err) => toast(`${t('error')}: ${err.message}`));
+}
+
+function deleteWish(id) {
+  state.wishes = (state.wishes || []).filter((w) => w.id !== id);
+  render();
+  api(`/wishes/${id}`, { method: 'DELETE' }).catch((err) => toast(`${t('error')}: ${err.message}`));
+}
+
+// -------------------------------------------------------------- security
+
+async function loadSecurity() {
+  try {
+    state.security = await api('/security');
+    render();
+  } catch { /* ignore */ }
+}
+
+// --------------------------------------------------------------- reviews
+
+function nooksHtml(rating, { interactive = false, bookId = '' } = {}) {
+  return `<div class="nooks ${interactive ? 'pick' : ''}">${[1, 2, 3, 4, 5].map((n) => (interactive
+    ? `<button class="nook ${n <= rating ? 'on' : ''}" data-action="rate" data-id="${esc(bookId)}" data-rating="${n}" aria-label="${n} ${esc(t('nooks'))}"><img src="/img/nook-pixel.png" alt=""></button>`
+    : `<span class="nook ${n <= rating ? 'on' : ''}"><img src="/img/nook-pixel.png" alt=""></span>`)).join('')}</div>`;
+}
+
+async function saveRating(bookId, rating) {
+  const text = (document.getElementById('review-text') || {}).value || '';
+  try {
+    await api('/reviews', { method: 'PUT', body: { user_id: state.user.id, book_id: bookId, rating, text: text.trim() } });
+    const detail = state.detail && state.detail.id === bookId ? state.detail : null;
+    if (detail) {
+      detail.reviews = detail.reviews || [];
+      const mine = detail.reviews.find((r) => r.user_id === state.user.id);
+      if (mine) Object.assign(mine, { rating, text: text.trim(), updated_at: Date.now() });
+      else detail.reviews.unshift({ user_id: state.user.id, user_name: state.user.name, rating, text: text.trim(), updated_at: Date.now() });
+    }
+    render();
+    toast(t('reviewSaved'));
+  } catch (err) {
+    toast(/finish/.test(err.message) ? t('rateHint') : `${t('error')}: ${err.message}`);
+  }
+}
+
+function deleteRating(bookId) {
+  const detail = state.detail && state.detail.id === bookId ? state.detail : null;
+  if (detail) detail.reviews = (detail.reviews || []).filter((r) => r.user_id !== state.user.id);
+  render();
+  api(`/reviews?user=${state.user.id}&book=${encodeURIComponent(bookId)}`, { method: 'DELETE' })
+    .catch((err) => toast(`${t('error')}: ${err.message}`));
+}
+
+function reviewSectionHtml(book) {
+  const finished = book.progress && book.progress.finished;
+  const all = book.reviews || [];
+  const mine = all.find((r) => r.user_id === state.user.id);
+  const others = all.filter((r) => r.user_id !== state.user.id);
+
+  const mineBlock = finished
+    ? `<div class="review-mine">
+        <div class="row spread">
+          <span class="small muted">${esc(t('yourRating'))}</span>
+          ${mine ? `<button class="link small" style="color:var(--terracotta);background:transparent" data-action="delete-rating" data-id="${esc(book.id)}">${esc(t('deleteReview'))}</button>` : ''}
+        </div>
+        ${nooksHtml(mine ? mine.rating : 0, { interactive: true, bookId: book.id })}
+        <textarea id="review-text" rows="2" maxlength="1000" placeholder="${esc(t('reviewPlaceholder'))}">${esc(mine ? mine.text : '')}</textarea>
+        <button class="small" data-action="save-review" data-id="${esc(book.id)}" ${mine ? '' : 'disabled'}>${esc(t('saveReview'))}</button>
+      </div>`
+    : `<p class="muted small" style="margin:0">${esc(t('rateHint'))}</p>`;
+
+  const othersBlock = others.length
+    ? others.map((r) => `<div class="review">
+          <div class="row spread"><span style="font-weight:700">${esc(r.user_name)}</span>${nooksHtml(r.rating)}</div>
+          ${r.text ? `<p class="small" style="margin:6px 0 0">${esc(r.text)}</p>` : ''}
+        </div>`).join('')
+    : (finished ? '' : `<p class="muted small" style="margin:10px 0 0">${esc(t('noReviews'))}</p>`);
+
+  return `<section class="section">
+      <div class="section-head"><h2>${esc(t('reviews'))}</h2></div>
+      <div class="card">${mineBlock}${othersBlock}</div>
+    </section>`;
+}
+
+function sleepHistoryHtml(book) {
+  const runs = book.sleep_sessions || [];
+  if (!runs.length) return '';
+  const fmtDay = (ts) => new Date(ts).toLocaleDateString(state.lang === 'en' ? 'en-GB' : 'de-DE', { day: '2-digit', month: '2-digit' });
+  return `<section class="section">
+      <div class="section-head"><h2>${esc(t('sleepHistory'))}</h2></div>
+      <p class="muted small" style="margin:-4px 0 10px">${esc(t('sleepHistoryHint'))}</p>
+      <div class="list">${runs.map((r) => `
+        <div class="sleep-run">
+          <div style="min-width:0">
+            <div><strong>${esc(t('awakeAt'))} ${fmtTime(r.started_sec)}</strong></div>
+            <div class="muted small">${esc(t('ranUntil'))} ${fmtTime(r.stopped_sec)} · ${esc(fmtDay(r.stopped_at))}</div>
+          </div>
+          <button class="small" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(r.started_sec)}">${esc(t('jumpBack'))}</button>
+        </div>`).join('')}</div>
+    </section>`;
+}
 
 // ----------------------------------------------------------------- render
 
@@ -808,6 +1316,10 @@ function render() {
   }
   updatePlayUi();
   updateTimeUi();
+  if (state.sheet && state.sheet.type === 'wish') {
+    const first = document.getElementById('wish-title');
+    if (first && document.activeElement !== first) first.focus();
+  }
   if (state.sheet && state.sheet.type === 'chapters') {
     const current = app.querySelector('.sheet .track.current');
     if (current) current.scrollIntoView({ block: 'center' });
@@ -839,7 +1351,7 @@ function avatarHtml(user, cls = 'avatar') {
 
 function renderProfiles() {
   return `<div class="profiles">
-    <img class="hero" src="/img/nook-pixel.png" alt="Mr. Nook">
+    <img class="hero wake" src="/img/nook-pixel.png" alt="Mr. Nook">
     <h1>${esc(t('whoListens'))}</h1>
     <div class="profile-grid">
       ${state.users.map((u) => `
@@ -912,13 +1424,23 @@ function renderHome() {
   const shelf = (title, list) => list.length ? `<section class="section"><div class="section-head"><h2>${esc(title)}</h2></div><div class="shelf">${list.map(tileHtml).join('')}</div></section>` : '';
 
   return `<header class="topbar">
-      <div><div class="muted small">${esc(greeting())}, ${esc(u.name)}</div><img class="logo" src="/img/nook-pixel.png" alt="Mr. Nook"></div>
+      <div><div class="muted small">${esc(greeting())}, ${esc(u.name)}</div><img class="logo" src="/img/nook-pixel.png" alt="Mr. Nook"><div class="saying">${esc(saying())}</div></div>
       <button class="avatar" data-action="switch-user" aria-label="${esc(t('switchProfile'))}" style="background:${esc(u.color)}">${u.has_avatar ? `<img src="/media/avatar/${u.id}?v=${state.avatarVersion}" alt="">` : esc(initials(u.name))}</button>
     </header>
     ${hero}
     ${shelf(t('recentlyAdded'), recentlyAdded)}
     ${shelf(t('recentlyPlayed'), recentlyPlayed)}
-    ${shelf(t('favorites'), favorites)}`;
+    ${shelf(t('favorites'), favorites)}
+    <section class="section">
+      <div class="wish-card">
+        <img src="/img/nook-pixel.png" alt="" class="wish-mascot">
+        <div>
+          <div style="font-weight:800">${esc(t('wishBook'))}</div>
+          <div class="muted small">${esc(t('wishHint'))}</div>
+        </div>
+        <button class="primary small" data-action="sheet-wish">${esc(t('wishBook'))}</button>
+      </div>
+    </section>`;
 }
 
 // ---- library
@@ -989,7 +1511,7 @@ function eqHtml(playing) {
 
 function trackHtml(book, i, currentIdx, isNow, playing) {
   const c = book.chapters[i];
-  return `<button class="track ${i === currentIdx ? 'current' : ''}" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(c.start_sec)}"${i === currentIdx ? ' data-current="1"' : ''}>
+  return `<button class="track ${i === currentIdx ? 'current' : ''}" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(c.start_sec)}" data-idx="${i}">
       <span class="n">${i === currentIdx && isNow ? eqHtml(playing) : i + 1}</span>
       <span>${esc(c.title || t('chapterN', i + 1))}</span>
       <span class="len">${fmtTime(chapterLength(book, i))}</span>
@@ -1036,6 +1558,7 @@ function renderBook() {
         <div class="muted small" style="margin-top:6px">${pct} % · ${esc(fmtDuration(Math.max(0, duration - pos)))} ${esc(t('left'))}${progress.finished ? ` · ${esc(t('finished'))}` : ''}</div>
       </div>
       <div class="progress"><span style="width:${pct}%"></span></div>
+      ${downloadRowHtml(b)}
       <button class="primary big-play" data-action="play-book" data-id="${esc(b.id)}">${playing ? ICON.pause : ICON.play}<span>${esc(label)}</span></button>
       <div class="actions">
         <button class="${progress.favorite ? 'on' : ''}" data-action="fav" data-id="${esc(b.id)}">${ICON.heart}${esc(t('favorite'))}</button>
@@ -1043,6 +1566,8 @@ function renderBook() {
         <button data-action="restart" data-id="${esc(b.id)}">${ICON.restart}${esc(t('restart'))}</button>
       </div>
       ${bookmarks}
+      ${sleepHistoryHtml(b)}
+      ${reviewSectionHtml(b)}
       <section class="section" style="margin-top:8px">
         <div class="section-head"><h2>${esc(t('chapters'))}</h2><span class="muted small">${total || 1}</span></div>
         <div class="tracklist">${chapters}</div>
@@ -1147,6 +1672,64 @@ function revokeInvite(token) {
   api(`/invites/${token}`, { method: 'DELETE' }).catch((err) => toast(`${t('error')}: ${err.message}`));
 }
 
+function downloadRowHtml(book) {
+  const busy = state.downloading && state.downloading.bookId === book.id;
+  if (busy) {
+    return `<div class="source busy">
+        <span class="src-icon">${ICON.downloadIcon}</span>
+        <div style="flex:1;min-width:0">
+          <div class="label" id="dl-label">${esc(t('downloading'))} ${state.downloading.pct} %</div>
+          <div class="progress" style="margin-top:6px"><span id="dl-bar" style="width:${state.downloading.pct}%"></span></div>
+        </div>
+        <button class="small" data-action="cancel-download">${esc(t('cancel'))}</button>
+      </div>`;
+  }
+  const have = isDownloaded(book.id);
+  return `<div class="source ${have ? 'offline' : ''}">
+      <span class="src-icon">${have ? ICON.phone : ICON.cloud}</span>
+      <div style="flex:1;min-width:0">
+        <div class="label">${esc(have ? t('downloaded') : t('streaming'))}</div>
+        <div class="muted small">${esc(have ? t('offlineHint') : t('streamHint'))} ${esc(fmtBytes(book.size_bytes))}</div>
+      </div>
+      ${have
+        ? `<button class="icon" data-action="remove-download" data-id="${esc(book.id)}" aria-label="${esc(t('removeDownload'))}">${ICON.trash}</button>`
+        : `<button class="small" data-action="download" data-id="${esc(book.id)}">${esc(t('download'))}</button>`}
+    </div>`;
+}
+
+function wishRowsHtml() {
+  if (state.wishes === null) return '';
+  if (!state.wishes.length) return `<div class="setting"><span class="hint">${esc(t('noWishes'))}</span></div>`;
+  return state.wishes.map((w) => `<div class="setting">
+      <div style="min-width:0">
+        <div class="label" style="${w.status === 'done' ? 'text-decoration:line-through;opacity:0.6' : ''}">${esc(w.title)}</div>
+        <div class="hint">${esc([w.author, w.note].filter(Boolean).join(' · '))}${w.author || w.note ? ' · ' : ''}${esc(t('wishFrom'))} ${esc(w.user_name)}</div>
+      </div>
+      <div class="row" style="gap:6px;flex:none">
+        <button class="link" data-action="wish-status" data-id="${w.id}" data-status="${w.status === 'done' ? 'open' : 'done'}">${esc(w.status === 'done' ? t('reopen') : t('markDone'))}</button>
+        <button class="link" style="color:var(--terracotta)" data-action="wish-delete" data-id="${w.id}">${esc(t('delete'))}</button>
+      </div>
+    </div>`).join('');
+}
+
+function securityRowHtml() {
+  const sec = state.security;
+  const on = sec ? sec.https : location.protocol === 'https:';
+  const detail = sec && sec.tls_version
+    ? `${sec.tls_version} · ${sec.tls_cipher}${sec.http_version ? ` · ${sec.http_version}` : ''}`
+    : (on ? 'TLS' : '');
+  return `<div class="setting">
+      <div class="row" style="min-width:0">
+        <span class="src-icon ${on ? 'ok' : 'bad'}">${ICON.lock}</span>
+        <div style="min-width:0">
+          <div class="label">${esc(on ? t('encrypted') : t('notEncrypted'))}</div>
+          <div class="hint" style="word-break:break-all">${esc(detail)}</div>
+        </div>
+      </div>
+    </div>
+    <div class="setting"><div class="hint">${esc(t('securityHint'))} ${esc(t('atRest'))}</div></div>`;
+}
+
 function renderSettings() {
   const u = state.user;
   const seg = (name, options, current) => `<div class="segment">${options.map(([value, label]) => `<button data-action="set-${name}" data-value="${value}" class="${String(current) === String(value) ? 'active' : ''}">${esc(label)}</button>`).join('')}</div>`;
@@ -1168,6 +1751,15 @@ function renderSettings() {
     <div class="settings-group">
       <div class="setting"><div class="row">${avatarHtml(u)}<span class="label">${esc(u.name)}</span></div><button class="link" data-action="edit-avatar" data-id="${u.id}">${esc(t('changePicture'))}</button></div>
       <div class="setting"><span class="label">${esc(t('switchProfile'))}</span><button class="link" data-action="switch-user">${esc(t('switchProfile'))}</button></div>
+    </div>
+    <h3 class="muted" style="margin-top:22px">${esc(t('wishes'))}</h3>
+    <div class="settings-group">
+      <div class="setting"><div><div class="label">${esc(t('wishBook'))}</div><div class="hint">${esc(t('wishHint'))}</div></div><button class="link" data-action="sheet-wish">${esc(t('wishBook'))}</button></div>
+      ${wishRowsHtml()}
+    </div>
+    <h3 class="muted" style="margin-top:22px">${esc(t('security'))}</h3>
+    <div class="settings-group">
+      ${securityRowHtml()}
     </div>
     <h3 class="muted" style="margin-top:22px">${esc(t('invites'))}</h3>
     <div class="settings-group">
@@ -1193,6 +1785,12 @@ function renderSettings() {
 function renderMini() {
   const b = state.now;
   const idx = chapterIndexAt(b, currentPos());
+  if (state.miniCollapsed) {
+    return `<button class="mini-pill" data-action="expand-mini" aria-label="${esc(t('nowPlaying'))}">
+        ${coverHtml(b, 'pill-cover')}
+        <span class="pill-dot ${audio.paused ? '' : 'live'}"></span>
+      </button>`;
+  }
   return `<div class="mini" role="button" data-action="open-player">
     <span class="bar" id="mini-bar"></span>
     ${coverHtml(b)}
@@ -1235,7 +1833,7 @@ function renderPlayer() {
         <button data-action="sheet-chapters" data-id="${esc(b.id)}" ${b.chapters.length ? '' : 'disabled'}>${ICON.chapters}<span>${esc(t('chapters'))}</span></button>
         <button data-action="sheet-sleep" class="${sleepActive() ? 'on' : ''}">${ICON.moon}<span id="sleep-label">${esc(sleepLabel())}</span></button>
         <button data-action="sheet-speed">${ICON.gauge}<span>${settings.speed}×</span></button>
-        <button data-action="add-bookmark">${ICON.bookmark}<span>${esc(t('addBookmark'))}</span></button>
+        <button data-action="sheet-bookmarks" data-id="${esc(b.id)}">${ICON.bookmark}<span>${esc(t('bookmarks'))}${b.bookmarks.length ? ` ${b.bookmarks.length}` : ''}</span></button>
       </div>
     </div>
   </section>`;
@@ -1254,6 +1852,23 @@ function renderSheet() {
     const playing = isNow && !audio.paused && !audio.ended;
     body = `<h3>${esc(t('chapters'))} <span class="muted small">${book.chapters.length}</span></h3>
       <div class="tracklist">${book.chapters.map((c, i) => trackHtml(book, i, idx, isNow, playing).replace('data-action="play-chapter"', 'data-action="play-chapter" data-close="1"')).join('')}</div>`;
+  } else if (s.type === 'bookmarks') {
+    const book = [state.now, state.detail].find((b) => b && b.id === s.bookId) || state.now;
+    if (!book) return '';
+    body = `<h3>${esc(t('bookmarks'))} <span class="muted small">${book.bookmarks.length}</span></h3>
+      <button class="primary" style="width:100%;margin-bottom:12px" data-action="add-bookmark">${esc(t('addBookmarkHere'))}</button>
+      ${book.bookmarks.length
+        ? `<div class="list">${book.bookmarks.map((bm) => bookmarkHtml(book, bm)).join('')}</div>`
+        : `<p class="muted small center">${esc(t('noBookmarks'))}</p>`}`;
+  } else if (s.type === 'wish') {
+    body = `<h3 class="center">${esc(t('wishBook'))}</h3>
+      <p class="muted small center" style="margin-top:0">${esc(t('wishHint'))}</p>
+      <div class="form">
+        <label><span>${esc(t('wishTitle'))}</span><input id="wish-title" maxlength="200" autocomplete="off"></label>
+        <label><span>${esc(t('wishAuthor'))}</span><input id="wish-author" maxlength="200" autocomplete="off"></label>
+        <label><span>${esc(t('wishNote'))}</span><input id="wish-note" maxlength="500" autocomplete="off"></label>
+        <button class="primary" data-action="submit-wish">${esc(t('wishSend'))}</button>
+      </div>`;
   } else if (s.type === 'sleep') {
     body = `<img class="mascot" src="/img/nook-pixel.png" alt=""><h3 class="center">${esc(t('sleepTimer'))}</h3>
       <p class="muted small center" style="margin-top:0">${esc(t('sleepHint'))}</p>
@@ -1289,6 +1904,27 @@ function renderSheet() {
 
 // ---- live UI updates (no re-render)
 
+// Keeps the "playing now" chapter marked while playback moves, without re-rendering.
+function updateTrackHighlight(idx) {
+  const playing = !audio.paused && !audio.ended;
+  app.querySelectorAll('.tracklist').forEach((list) => {
+    const tracks = list.querySelectorAll('.track');
+    if (!tracks.length) return;
+    // A list may show a window of chapters, so trust each track's own index.
+    tracks.forEach((track) => {
+      const own = Number(track.dataset.idx);
+      const isCurrent = own === idx;
+      if (track.classList.contains('current') !== isCurrent) track.classList.toggle('current', isCurrent);
+      const slot = track.firstElementChild;
+      if (!slot) return;
+      const wantEq = isCurrent && state.now && track.dataset.id === state.now.id;
+      const hasEq = !!slot.querySelector('.eq');
+      if (wantEq && !hasEq) slot.innerHTML = eqHtml(playing);
+      else if (!wantEq && hasEq) slot.textContent = String(own + 1);
+    });
+  });
+}
+
 function updatePlayUi() {
   const playing = !audio.paused && !audio.ended && !!state.now;
   app.querySelectorAll('[data-play-button]').forEach((btn) => {
@@ -1318,6 +1954,7 @@ function updateTimeUi() {
   const idx = chapterIndexAt(state.now, pos);
   const chapterNow = document.getElementById('chapter-now');
   if (chapterNow) chapterNow.textContent = idx >= 0 ? chapterTitle(state.now, idx) : '';
+  updateTrackHighlight(idx);
   const miniBar = document.getElementById('mini-bar');
   if (miniBar) miniBar.style.width = `${pct}%`;
   const miniSub = document.getElementById('mini-sub');
@@ -1325,13 +1962,27 @@ function updateTimeUi() {
 }
 
 let toastTimer;
-function toast(message) {
+function toast(message, actionLabel, onAction) {
   let el = document.querySelector('.toast');
   if (!el) { el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
-  el.textContent = message;
+  el.textContent = '';
+  const text = document.createElement('span');
+  text.textContent = message;
+  el.appendChild(text);
+  if (actionLabel && onAction) {
+    const action = document.createElement('button');
+    action.className = 'toast-action';
+    action.textContent = actionLabel;
+    action.addEventListener('click', () => {
+      el.classList.remove('show');
+      clearTimeout(toastTimer);
+      onAction();
+    });
+    el.appendChild(action);
+  }
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  toastTimer = setTimeout(() => el.classList.remove('show'), actionLabel ? 6000 : 2000);
 }
 
 // ----------------------------------------------------------------- events
@@ -1382,6 +2033,18 @@ app.addEventListener('click', (event) => {
     case 'sheet-speed': openSheet({ type: 'speed' }); break;
     case 'sheet-sort': openSheet({ type: 'sort' }); break;
     case 'sheet-add': openSheet({ type: 'add' }); break;
+    case 'sheet-bookmarks': openSheet({ type: 'bookmarks', bookId: id || (state.now && state.now.id) }); break;
+    case 'sheet-wish': openSheet({ type: 'wish' }); break;
+    case 'expand-mini': state.miniCollapsed = false; render(); break;
+    case 'rate': saveRating(id, Number(target.dataset.rating)); break;
+    case 'save-review': { const mineNow = state.detail && (state.detail.reviews || []).find((r) => r.user_id === state.user.id); if (mineNow) saveRating(id, mineNow.rating); break; }
+    case 'delete-rating': deleteRating(id); break;
+    case 'submit-wish': submitWish(); break;
+    case 'wish-status': setWishStatus(Number(id), target.dataset.status); break;
+    case 'wish-delete': deleteWish(Number(id)); break;
+    case 'download': downloadBook(state.detail && state.detail.id === id ? state.detail : state.books.find((b) => b.id === id)); break;
+    case 'cancel-download': cancelDownload(); break;
+    case 'remove-download': removeDownload(id); break;
     case 'close-sheet': closeSheet(); break;
     case 'sleep': setSleep(Number(target.dataset.min)); break;
     case 'speed': setSpeed(Number(target.dataset.value)); break;
@@ -1456,17 +2119,26 @@ app.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && event.target.dataset.bookmark) event.target.blur();
 });
 
-// Swipe down on the player cover closes the player.
-let touchStartY = null;
+// Swipe down on the player cover closes the player; swipe the mini bar away to uncover
+// whatever sits behind it.
+let touchStart = null;
 app.addEventListener('touchstart', (event) => {
   const cover = event.target.closest('.player .cover-large');
-  touchStartY = cover ? event.touches[0].clientY : null;
+  const mini = event.target.closest('.mini');
+  if (!cover && !mini) { touchStart = null; return; }
+  touchStart = { y: event.touches[0].clientY, x: event.touches[0].clientX, target: cover ? 'player' : 'mini' };
 }, { passive: true });
 app.addEventListener('touchend', (event) => {
-  if (touchStartY === null) return;
-  const dy = event.changedTouches[0].clientY - touchStartY;
-  touchStartY = null;
-  if (dy > 90 && state.playerOpen && !state.sheet) closePlayer();
+  if (!touchStart) return;
+  const dy = event.changedTouches[0].clientY - touchStart.y;
+  const dx = event.changedTouches[0].clientX - touchStart.x;
+  const kind = touchStart.target;
+  touchStart = null;
+  if (kind === 'player' && dy > 90 && state.playerOpen && !state.sheet) closePlayer();
+  if (kind === 'mini' && (dy > 40 || Math.abs(dx) > 70)) {
+    state.miniCollapsed = true;
+    render();
+  }
 }, { passive: true });
 
 boot().catch(fail);

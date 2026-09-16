@@ -5,12 +5,26 @@ but for our own files: one continuous audio file per book, covers, chapters, boo
 sleep timer, favorites, listening position synced across devices. Runs as a PWA on Android
 (and every browser).
 
-Screens: Home (continue listening, recently added, recently played, favorites), Library
-(filters, grid/list, sort), Book detail (chapters, bookmarks, favorite, mark finished,
-restart), full-screen Player (±skip, speed 0.5–3×, sleep timer, chapter sheet, bookmarks),
-Search (title, author, chapter), Settings (playback defaults, light/dark/system theme,
-language, profile picture, about). The Mr. Nook mascot appears on the profile screen,
-empty states and the sleep timer.
+Screens: Home (a greeting Mr. Nook picks by daypart, continue listening, recently added,
+recently played, favorites, book wishes), Library (filters, grid/list, sort), Book detail
+(streaming or downloaded, chapters, bookmarks, sleep history, ratings, favorite, mark
+finished, restart), full-screen Player (±skip, speed 0.5–3×, sleep timer, chapter sheet,
+bookmarks), Search (title and author), Settings (playback defaults, theme, language,
+profile picture, wishes, connection details, invites, about). The mascot shows up on the
+profile screen, in empty states and in the sleep timer.
+
+Beyond plain playback:
+
+- **Offline**: a book can be downloaded to the device. The service worker then answers the
+  player's range requests from the Cache API, so playback uses no data at all. Every book
+  says plainly whether it is streaming or on the device.
+- **Sleep history**: each sleep timer run is recorded as a span, from where you were still
+  awake to where playback stopped, so you can find the spot again after dozing off.
+- **Ratings**: five Nooks per book, shared between both profiles, and only unlocked once
+  that person finished the book.
+- **Wishes**: either of you can put a title on a shared list for the next download round.
+- **Invites**: single-use links replace passing the raw secret around.
+- **Connection**: Settings shows the TLS version and cipher actually negotiated.
 
 Stack: Cloudflare Workers (API + static PWA), R2 (audio, covers, profile pictures), D1
 (SQLite: users, books, progress, bookmarks, chapters). No framework, no build step.
