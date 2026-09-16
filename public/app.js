@@ -4,7 +4,7 @@
 const audio = document.getElementById('audio');
 const app = document.getElementById('app');
 
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.3.0';
 const GITHUB_URL = 'https://github.com/dd2repo/mr-nook';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 const SKIP_BACK_OPTIONS = [10, 15, 30];
@@ -797,7 +797,7 @@ function renderError() {
   return `<div class="locked"><h1>${esc(t('error'))}</h1><p class="muted">${esc(t('loadError'))}</p><button class="primary" data-action="reload">${esc(t('retry'))}</button></div>`;
 }
 function renderLocked() {
-  return `<div class="locked"><img class="hero" src="/img/hero-full.jpg" alt=""><h1>${esc(t('locked'))}</h1><p class="muted" style="max-width:340px">${esc(t('lockedHint'))}</p></div>`;
+  return `<div class="locked"><img class="hero" src="/img/nook-pixel.png" alt=""><h1>${esc(t('locked'))}</h1><p class="muted" style="max-width:340px">${esc(t('lockedHint'))}</p></div>`;
 }
 
 function avatarHtml(user, cls = 'avatar') {
@@ -807,7 +807,7 @@ function avatarHtml(user, cls = 'avatar') {
 
 function renderProfiles() {
   return `<div class="profiles">
-    <img class="hero" src="/img/hero-chair.jpg" alt="Mr. Nook">
+    <img class="hero" src="/img/nook-pixel.png" alt="Mr. Nook">
     <h1>${esc(t('whoListens'))}</h1>
     <div class="profile-grid">
       ${state.users.map((u) => `
@@ -854,7 +854,7 @@ function renderHome() {
 
   let hero;
   if (!books.length) {
-    hero = `<div class="empty card"><img class="hero small" src="/img/hero-chair.jpg" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><button class="primary" data-action="sheet-add">${esc(t('addFirst'))}</button></div>`;
+    hero = `<div class="empty card"><img class="hero small" src="/img/nook-pixel.png" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><button class="primary" data-action="sheet-add">${esc(t('addFirst'))}</button></div>`;
   } else if (continueBook) {
     const chapterIdx = state.now && state.now.id === continueBook.id ? chapterIndexAt(state.now, currentPos()) : -1;
     const chapterLine = chapterIdx >= 0 ? chapterTitle(state.now, chapterIdx) : (continueBook.chapter_count ? '' : fmtDuration(Math.max(0, continueBook.duration_sec - continueBook.position_sec)) + ' ' + t('left'));
@@ -872,7 +872,7 @@ function renderHome() {
       </div>
     </section>`;
   } else {
-    hero = `<div class="empty card"><img class="hero small" src="/img/hero-chair.jpg" alt=""><p class="muted">${esc(t('pickSomething'))}</p></div>`;
+    hero = `<div class="empty card"><img class="hero small" src="/img/nook-pixel.png" alt=""><p class="muted">${esc(t('pickSomething'))}</p></div>`;
   }
 
   const shelf = (title, list) => list.length ? `<section class="section"><div class="section-head"><h2>${esc(title)}</h2></div><div class="shelf">${list.map(tileHtml).join('')}</div></section>` : '';
@@ -925,7 +925,7 @@ function renderLibrary() {
   const filters = [['all', t('all')], ['progress', t('inProgress')], ['finished', t('finished')], ['favorites', t('favorites')]];
   let body;
   if (!state.books.length) {
-    body = `<div class="empty"><img class="hero small" src="/img/hero-chair.jpg" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><button class="primary" data-action="sheet-add">${esc(t('addFirst'))}</button></div>`;
+    body = `<div class="empty"><img class="hero small" src="/img/nook-pixel.png" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><button class="primary" data-action="sheet-add">${esc(t('addFirst'))}</button></div>`;
   } else if (!list.length) {
     body = `<div class="empty"><p class="muted">${esc(t('nothingInFilter'))}</p></div>`;
   } else if (settings.libView === 'list') {
@@ -1025,7 +1025,7 @@ function runSearch(query) {
 function renderSearch() {
   let body = '';
   if (state.results === null) body = '';
-  else if (!state.results.length) body = `<div class="empty"><img class="hero small" src="/img/hero-full.jpg" alt=""><p class="muted">${esc(t('nothingHere'))}</p></div>`;
+  else if (!state.results.length) body = `<div class="empty"><img class="hero small" src="/img/nook-pixel.png" alt=""><p class="muted">${esc(t('nothingHere'))}</p></div>`;
   else body = `<div class="list">${state.results.map(listItemHtml).join('')}</div>`;
   return `<header class="topbar"><h1>${esc(t('search'))}</h1></header>
     <div class="searchbox">${ICON.search}<input id="q" type="search" autocomplete="off" placeholder="${esc(t('searchPlaceholder'))}" value="${esc(state.query)}"></div>
@@ -1138,7 +1138,7 @@ function renderSheet() {
         <span class="len">${fmtTime(chapterLength(state.now, i))}</span>
       </button>`).join('')}</div>`;
   } else if (s.type === 'sleep') {
-    body = `<img class="mascot" src="/img/hero-full.jpg" alt=""><h3 class="center">${esc(t('sleepTimer'))}</h3>
+    body = `<img class="mascot" src="/img/nook-pixel.png" alt=""><h3 class="center">${esc(t('sleepTimer'))}</h3>
       <p class="muted small center" style="margin-top:0">${esc(t('sleepHint'))}</p>
       <div class="chips" style="justify-content:center">
         <button data-action="sleep" data-min="0" class="${sleepActive() ? '' : 'active'}">${esc(t('off'))}</button>

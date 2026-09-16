@@ -1,6 +1,6 @@
 // Service worker: caches the app shell so the PWA installs and opens fast.
 // Audio and covers (/media/*) and data (/api/*) are never cached.
-const VERSION = 'mr-nook-v2';
+const VERSION = 'mr-nook-v3';
 const SHELL = [
   '/',
   '/index.html',
@@ -12,8 +12,7 @@ const SHELL = [
   '/icons/icon-512.png',
   '/icons/icon-512-maskable.png',
   '/icons/apple-touch-icon.png',
-  '/img/hero-chair.jpg',
-  '/img/hero-full.jpg',
+  '/img/nook-pixel.png',
 ];
 
 self.addEventListener('install', (event) => {

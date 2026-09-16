@@ -14,7 +14,7 @@ empty states and the sleep timer.
 
 Stack: Cloudflare Workers (API + static PWA), R2 (audio, covers, profile pictures), D1
 (SQLite: users, books, progress, bookmarks, chapters). No framework, no build step.
-Artwork sources live in `design/`.
+The app icon and in-app mascot are a hand-set 32x32 pixel sprite (`scripts/make-pixel-icon.mjs`); the painted artwork it is based on lives in `design/`.
 
 ## Cost
 
@@ -87,7 +87,8 @@ public/                PWA: index.html, app.js, styles.css, sw.js, manifest, ico
 migrations/            D1 schema (applied with wrangler d1 migrations apply)
 scripts/setup.sh       Cloudflare provisioning + deploy
 scripts/books.mjs      add / list / remove audiobooks
-design/                Mascot artwork the icons and hero images are cut from
+design/                Mascot artwork (reference) and icon proposals
+scripts/make-pixel-icon.mjs  Renders the 32x32 pixel sprite into icons and the in-app mascot
 ```
 
 ## Not yet built
