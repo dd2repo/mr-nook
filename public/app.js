@@ -878,7 +878,7 @@ function renderHome() {
   const shelf = (title, list) => list.length ? `<section class="section"><div class="section-head"><h2>${esc(title)}</h2></div><div class="shelf">${list.map(tileHtml).join('')}</div></section>` : '';
 
   return `<header class="topbar">
-      <div><div class="muted small">${esc(greeting())}, ${esc(u.name)}</div><h1>Mr. Nook</h1></div>
+      <div><div class="muted small">${esc(greeting())}, ${esc(u.name)}</div><img class="logo" src="/img/nook-pixel.png" alt="Mr. Nook"></div>
       <button class="avatar" data-action="switch-user" aria-label="${esc(t('switchProfile'))}" style="background:${esc(u.color)}">${u.has_avatar ? `<img src="/media/avatar/${u.id}?v=${state.avatarVersion}" alt="">` : esc(initials(u.name))}</button>
     </header>
     ${hero}

@@ -115,6 +115,7 @@ h3 { font-size: 15px; font-weight: 800; margin: 0; }
 .screen.with-mini { padding-bottom: calc(var(--safe-bottom) + var(--nav-h) + var(--mini-h) + 24px); }
 .screen.bare { padding-bottom: calc(var(--safe-bottom) + 24px); }
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.logo { height: 64px; margin-top: 4px; image-rendering: pixelated; }
 .section { margin-top: 26px; }
 .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
 
