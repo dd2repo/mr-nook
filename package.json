@@ -10,7 +10,6 @@
     "setup": "bash scripts/setup.sh",
     "migrate:local": "wrangler d1 migrations apply mr-nook --local",
     "migrate:remote": "wrangler d1 migrations apply mr-nook --remote",
-    "icons": "node scripts/make-icons.mjs",
     "books": "node scripts/books.mjs"
   },
   "devDependencies": {

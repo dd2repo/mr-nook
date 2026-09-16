@@ -1,11 +1,20 @@
 # Mr. Nook
 
-Private audiobook player for two people, built like Audible but for our own files.
-One continuous audio file per book, covers, bookmarks, sleep timer, chapter marks,
-listening position synced across devices. Runs as a PWA on Android (and every browser).
+A cozy home for your own audiobooks. Private player for two people, built like Audible
+but for our own files: one continuous audio file per book, covers, chapters, bookmarks,
+sleep timer, favorites, listening position synced across devices. Runs as a PWA on Android
+(and every browser).
 
-Stack: Cloudflare Workers (API + static PWA), R2 (audio and covers), D1 (SQLite: users,
-books, progress, bookmarks, chapters). No framework, no build step.
+Screens: Home (continue listening, recently added, recently played, favorites), Library
+(filters, grid/list, sort), Book detail (chapters, bookmarks, favorite, mark finished,
+restart), full-screen Player (±skip, speed 0.5–3×, sleep timer, chapter sheet, bookmarks),
+Search (title, author, chapter), Settings (playback defaults, light/dark/system theme,
+language, profile picture, about). The Mr. Nook mascot appears on the profile screen,
+empty states and the sleep timer.
+
+Stack: Cloudflare Workers (API + static PWA), R2 (audio, covers, profile pictures), D1
+(SQLite: users, books, progress, bookmarks, chapters). No framework, no build step.
+Artwork sources live in `design/`.
 
 ## Cost
 
@@ -74,15 +83,16 @@ Open `http://localhost:8787/#k=local-dev-key-change-me`.
 
 ```
 src/worker.js          API, auth, R2 range streaming, multipart upload
-public/                PWA: index.html, app.js, styles.css, sw.js, manifest, icons
-migrations/            D1 schema
+public/                PWA: index.html, app.js, styles.css, sw.js, manifest, icons, img
+migrations/            D1 schema (applied with wrangler d1 migrations apply)
 scripts/setup.sh       Cloudflare provisioning + deploy
 scripts/books.mjs      add / list / remove audiobooks
-scripts/make-icons.mjs regenerates the PNG icons
+design/                Mascot artwork the icons and hero images are cut from
 ```
 
 ## Not yet built
 
-- Chapter editor in the app (chapters are only imported from the file today).
+- Chapter editor and metadata editing in the app (chapters are imported from the file).
 - Offline download of a book to the phone.
 - Deleting books from the UI (use `books.mjs remove`).
+- Importing from the phone; audiobooks are added with the script on the Mac.

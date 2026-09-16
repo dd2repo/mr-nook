@@ -119,15 +119,46 @@ async function handleApi(request, env, url) {
 
   if (resource === 'users') {
     if (method === 'GET' && !id) {
-      const { results } = await env.DB.prepare('SELECT id, name, color, lang FROM users ORDER BY id').all();
+      const { results } = await env.DB.prepare(
+        'SELECT id, name, color, lang, (avatar_key IS NOT NULL) AS has_avatar FROM users ORDER BY id',
+      ).all();
       return json(results);
     }
     if (method === 'PATCH' && id && !sub) {
       const userId = requireInt(id, 'user id');
       const body = await readJson(request);
-      const lang = body.lang === 'en' ? 'en' : 'de';
-      await env.DB.prepare('UPDATE users SET lang = ? WHERE id = ?').bind(lang, userId).run();
-      return json({ ok: true, lang });
+      const sets = [];
+      const values = [];
+      if (body.lang !== undefined) {
+        sets.push('lang = ?');
+        values.push(body.lang === 'en' ? 'en' : 'de');
+      }
+      if (body.color !== undefined) {
+        if (!/^#[0-9a-f]{6}$/i.test(body.color)) throw new HttpError(400, 'color must be a hex colour');
+        sets.push('color = ?');
+        values.push(body.color.toLowerCase());
+      }
+      if (!sets.length) throw new HttpError(400, 'nothing to update');
+      await env.DB.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).bind(...values, userId).run();
+      return json({ ok: true });
+    }
+    if (id && sub === 'avatar') {
+      const userId = requireInt(id, 'user id');
+      const key = `avatars/${userId}.jpg`;
+      if (method === 'PUT') {
+        const contentType = request.headers.get('content-type') || 'image/jpeg';
+        if (!/^image\/(jpeg|png|webp)$/.test(contentType)) throw new HttpError(400, 'avatar must be jpeg, png or webp');
+        const bytes = await request.arrayBuffer();
+        if (bytes.byteLength > 2 * 1024 * 1024) throw new HttpError(413, 'avatar larger than 2 MB');
+        await env.BUCKET.put(key, bytes, { httpMetadata: { contentType } });
+        await env.DB.prepare('UPDATE users SET avatar_key = ? WHERE id = ?').bind(key, userId).run();
+        return json({ ok: true, version: Date.now() });
+      }
+      if (method === 'DELETE') {
+        await env.BUCKET.delete(key);
+        await env.DB.prepare('UPDATE users SET avatar_key = NULL WHERE id = ?').bind(userId).run();
+        return new Response(null, { status: 204 });
+      }
     }
   }
 
@@ -142,6 +173,12 @@ async function handleApi(request, env, url) {
   if (resource === 'progress' && (method === 'PUT' || method === 'POST') && !id) {
     return saveProgress(env, await readJson(request));
   }
+
+  if (resource === 'favorite' && (method === 'PUT' || method === 'POST') && !id) {
+    return saveFavorite(env, await readJson(request));
+  }
+
+  if (resource === 'search' && method === 'GET' && !id) return searchBooks(env, url);
 
   if (resource === 'bookmarks') {
     if (method === 'GET' && !id) return listBookmarks(env, url);
@@ -158,17 +195,45 @@ async function handleApi(request, env, url) {
   throw new HttpError(404, 'not found');
 }
 
+const BOOK_LIST_SELECT = `
+  SELECT b.id, b.title, b.author, b.duration_sec, b.size_bytes, b.created_at,
+         (b.cover_key IS NOT NULL) AS has_cover,
+         (SELECT COUNT(*) FROM chapters c WHERE c.book_id = b.id) AS chapter_count,
+         p.position_sec, p.finished, p.favorite, p.updated_at AS last_played
+    FROM books b
+    LEFT JOIN progress p ON p.book_id = b.id AND p.user_id = ?`;
+
 async function listBooks(env, url) {
   const userId = requireInt(url.searchParams.get('user'), 'user');
   const { results } = await env.DB.prepare(
-    `SELECT b.id, b.title, b.author, b.duration_sec, b.size_bytes, b.created_at,
-            (b.cover_key IS NOT NULL) AS has_cover,
-            p.position_sec, p.finished, p.updated_at AS last_played
-       FROM books b
-       LEFT JOIN progress p ON p.book_id = b.id AND p.user_id = ?
-      ORDER BY p.updated_at DESC NULLS LAST, b.created_at DESC`,
+    `${BOOK_LIST_SELECT} ORDER BY p.updated_at DESC NULLS LAST, b.created_at DESC`,
   ).bind(userId).all();
   return json(results);
+}
+
+async function searchBooks(env, url) {
+  const userId = requireInt(url.searchParams.get('user'), 'user');
+  const q = (url.searchParams.get('q') || '').trim().slice(0, 100);
+  if (!q) return json([]);
+  const like = `%${q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
+  const { results } = await env.DB.prepare(
+    `${BOOK_LIST_SELECT}
+      WHERE b.title LIKE ?2 ESCAPE '\\' OR b.author LIKE ?2 ESCAPE '\\'
+         OR EXISTS (SELECT 1 FROM chapters c WHERE c.book_id = b.id AND c.title LIKE ?2 ESCAPE '\\')
+      ORDER BY b.title`,
+  ).bind(userId, like).all();
+  return json(results);
+}
+
+async function saveFavorite(env, body) {
+  const userId = requireInt(body.user_id, 'user_id');
+  const bookId = requireBookId(body.book_id);
+  const favorite = body.favorite ? 1 : 0;
+  await env.DB.prepare(
+    `INSERT INTO progress (user_id, book_id, position_sec, finished, updated_at, favorite) VALUES (?, ?, 0, 0, 0, ?)
+     ON CONFLICT(user_id, book_id) DO UPDATE SET favorite = excluded.favorite`,
+  ).bind(userId, bookId, favorite).run();
+  return json({ ok: true, favorite });
 }
 
 async function getBook(env, url, bookId) {
@@ -182,7 +247,7 @@ async function getBook(env, url, bookId) {
   const [chapters, bookmarks, progress] = await env.DB.batch([
     env.DB.prepare('SELECT id, idx, title, start_sec FROM chapters WHERE book_id = ? ORDER BY idx').bind(bookId),
     env.DB.prepare('SELECT id, position_sec, note, created_at FROM bookmarks WHERE book_id = ? AND user_id = ? ORDER BY position_sec').bind(bookId, userId),
-    env.DB.prepare('SELECT position_sec, finished, updated_at FROM progress WHERE book_id = ? AND user_id = ?').bind(bookId, userId),
+    env.DB.prepare('SELECT position_sec, finished, favorite, updated_at FROM progress WHERE book_id = ? AND user_id = ?').bind(bookId, userId),
   ]);
   return json({
     ...book,
@@ -262,21 +327,32 @@ async function saveProgress(env, body) {
   const bookId = requireBookId(body.book_id);
   const position = requireNumber(body.position_sec, 'position_sec');
   const finished = body.finished ? 1 : 0;
-  const now = Date.now();
+  // "Restart book" sends touch=false so the book does not jump to the top of recently played.
+  const now = body.touch === false ? 0 : Date.now();
   await env.DB.prepare(
     `INSERT INTO progress (user_id, book_id, position_sec, finished, updated_at) VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(user_id, book_id) DO UPDATE SET
-       position_sec = excluded.position_sec, finished = excluded.finished, updated_at = excluded.updated_at`,
+       position_sec = excluded.position_sec, finished = excluded.finished,
+       updated_at = CASE WHEN excluded.updated_at = 0 THEN progress.updated_at ELSE excluded.updated_at END`,
   ).bind(userId, bookId, position, finished, now).run();
   return json({ ok: true, updated_at: now });
 }
 
 async function listBookmarks(env, url) {
   const userId = requireInt(url.searchParams.get('user'), 'user');
-  const bookId = requireBookId(url.searchParams.get('book'));
+  const rawBook = url.searchParams.get('book');
+  if (rawBook) {
+    const bookId = requireBookId(rawBook);
+    const { results } = await env.DB.prepare(
+      'SELECT id, book_id, position_sec, note, created_at FROM bookmarks WHERE user_id = ? AND book_id = ? ORDER BY position_sec',
+    ).bind(userId, bookId).all();
+    return json(results);
+  }
   const { results } = await env.DB.prepare(
-    'SELECT id, position_sec, note, created_at FROM bookmarks WHERE user_id = ? AND book_id = ? ORDER BY position_sec',
-  ).bind(userId, bookId).all();
+    `SELECT bm.id, bm.book_id, bm.position_sec, bm.note, bm.created_at, b.title AS book_title
+       FROM bookmarks bm JOIN books b ON b.id = bm.book_id
+      WHERE bm.user_id = ? ORDER BY bm.created_at DESC`,
+  ).bind(userId).all();
   return json(results);
 }
 
@@ -354,12 +430,21 @@ async function handleMedia(request, env, url) {
   requireAuth(request, env);
   if (request.method !== 'GET' && request.method !== 'HEAD') throw new HttpError(405, 'method not allowed');
 
-  const [, , rawBookId, kind] = url.pathname.split('/');
-  const bookId = requireBookId(rawBookId);
-  const book = await env.DB.prepare('SELECT audio_key, cover_key FROM books WHERE id = ?').bind(bookId).first();
-  if (!book) throw new HttpError(404, 'book not found');
-
-  const key = kind === 'audio' ? book.audio_key : kind === 'cover' ? book.cover_key : null;
+  const [, , first, second] = url.pathname.split('/');
+  let key = null;
+  let kind = second;
+  if (first === 'avatar') {
+    // /media/avatar/:userId
+    kind = 'cover';
+    const user = await env.DB.prepare('SELECT avatar_key FROM users WHERE id = ?').bind(requireInt(second, 'user id')).first();
+    key = user ? user.avatar_key : null;
+  } else {
+    // /media/:bookId/audio | cover
+    const bookId = requireBookId(first);
+    const book = await env.DB.prepare('SELECT audio_key, cover_key FROM books WHERE id = ?').bind(bookId).first();
+    if (!book) throw new HttpError(404, 'book not found');
+    key = kind === 'audio' ? book.audio_key : kind === 'cover' ? book.cover_key : null;
+  }
   if (!key) throw new HttpError(404, 'not found');
 
   const range = parseRange(request.headers.get('range'));
@@ -380,7 +465,7 @@ async function handleMedia(request, env, url) {
   if (!headers.has('content-type')) headers.set('content-type', kind === 'audio' ? 'audio/mpeg' : 'image/jpeg');
   headers.set('etag', object.httpEtag);
   headers.set('accept-ranges', 'bytes');
-  headers.set('cache-control', kind === 'cover' ? 'private, max-age=604800' : 'private, max-age=3600');
+  headers.set('cache-control', kind === 'cover' ? 'private, max-age=86400' : 'private, max-age=3600');
 
   // Precondition matched (If-None-Match etc.): R2 returns the object without a body.
   if (!('body' in object)) return new Response(null, { status: 304, headers });

@@ -1,17 +1,19 @@
 // Service worker: caches the app shell so the PWA installs and opens fast.
-// Audio (/media/*) and data (/api/*) are never intercepted; the browser handles
-// Range requests for audio natively.
-const VERSION = 'mr-nook-v1';
+// Audio and covers (/media/*) and data (/api/*) are never cached.
+const VERSION = 'mr-nook-v2';
 const SHELL = [
   '/',
   '/index.html',
   '/app.js',
   '/styles.css',
   '/manifest.webmanifest',
-  '/icons/icon.svg',
+  '/icons/favicon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-512-maskable.png',
+  '/icons/apple-touch-icon.png',
+  '/img/hero-chair.jpg',
+  '/img/hero-full.jpg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -26,6 +28,12 @@ self.addEventListener('activate', (event) => {
       .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'clear-cache') {
+    event.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))));
+  }
 });
 
 self.addEventListener('fetch', (event) => {
