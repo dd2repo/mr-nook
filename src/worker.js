@@ -269,6 +269,20 @@ function normalizeChapters(input) {
     .map((c, i) => ({ ...c, idx: i }));
 }
 
+// D1 caps how many statements one batch may carry, so chapter rows go in chunks.
+const CHAPTER_CHUNK = 50;
+
+async function writeChapters(env, bookId, chapters, leadingStatements = []) {
+  const inserts = chapters.map((c) =>
+    env.DB.prepare('INSERT INTO chapters (book_id, idx, title, start_sec) VALUES (?, ?, ?, ?)').bind(bookId, c.idx, c.title, c.start_sec),
+  );
+  const first = inserts.splice(0, Math.max(0, CHAPTER_CHUNK - leadingStatements.length));
+  await env.DB.batch([...leadingStatements, ...first]);
+  for (let i = 0; i < inserts.length; i += CHAPTER_CHUNK) {
+    await env.DB.batch(inserts.slice(i, i + CHAPTER_CHUNK));
+  }
+}
+
 async function upsertBook(env, body) {
   const id = requireBookId(body.id);
   if (typeof body.title !== 'string' || !body.title.trim()) throw new HttpError(400, 'title is required');
@@ -279,7 +293,7 @@ async function upsertBook(env, body) {
   const author = typeof body.author === 'string' && body.author.trim() ? body.author.trim().slice(0, 200) : null;
   const chapters = normalizeChapters(body.chapters);
 
-  const statements = [
+  await writeChapters(env, id, chapters, [
     env.DB.prepare(
       `INSERT INTO books (id, title, author, duration_sec, size_bytes, audio_key, cover_key, created_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -288,11 +302,7 @@ async function upsertBook(env, body) {
          size_bytes = excluded.size_bytes, audio_key = excluded.audio_key, cover_key = excluded.cover_key`,
     ).bind(id, body.title.trim().slice(0, 300), author, duration, size, audioKey, coverKey, Date.now()),
     env.DB.prepare('DELETE FROM chapters WHERE book_id = ?').bind(id),
-    ...chapters.map((c) =>
-      env.DB.prepare('INSERT INTO chapters (book_id, idx, title, start_sec) VALUES (?, ?, ?, ?)').bind(id, c.idx, c.title, c.start_sec),
-    ),
-  ];
-  await env.DB.batch(statements);
+  ]);
   return json({ ok: true, id, chapters: chapters.length });
 }
 
@@ -300,11 +310,8 @@ async function replaceChapters(env, bookId, body) {
   const exists = await env.DB.prepare('SELECT 1 FROM books WHERE id = ?').bind(bookId).first();
   if (!exists) throw new HttpError(404, 'book not found');
   const chapters = normalizeChapters(body.chapters);
-  await env.DB.batch([
+  await writeChapters(env, bookId, chapters, [
     env.DB.prepare('DELETE FROM chapters WHERE book_id = ?').bind(bookId),
-    ...chapters.map((c) =>
-      env.DB.prepare('INSERT INTO chapters (book_id, idx, title, start_sec) VALUES (?, ?, ?, ?)').bind(bookId, c.idx, c.title, c.start_sec),
-    ),
   ]);
   return json({ ok: true, chapters: chapters.length });
 }

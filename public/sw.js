@@ -1,6 +1,6 @@
 // Service worker: caches the app shell so the PWA installs and opens fast.
 // Audio and covers (/media/*) and data (/api/*) are never cached.
-const VERSION = 'mr-nook-v3';
+const VERSION = 'mr-nook-v4';
 const SHELL = [
   '/',
   '/index.html',

@@ -4,7 +4,7 @@
 const audio = document.getElementById('audio');
 const app = document.getElementById('app');
 
-const APP_VERSION = '0.3.0';
+const APP_VERSION = '0.4.0';
 const GITHUB_URL = 'https://github.com/dd2repo/mr-nook';
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 const SKIP_BACK_OPTIONS = [10, 15, 30];
@@ -109,6 +109,7 @@ const STRINGS = {
     seconds: 's',
     minutes: 'Min',
     chapterN: (n) => `Kapitel ${n}`,
+    showAllChapters: (n) => `Alle ${n} Kapitel anzeigen`,
     hoursMin: (h, m) => (h > 0 ? `${h} Std ${m} Min` : `${m} Min`),
     sleepIn: (t) => `Schläft in ${t}`,
   },
@@ -204,6 +205,7 @@ const STRINGS = {
     seconds: 's',
     minutes: 'min',
     chapterN: (n) => `Chapter ${n}`,
+    showAllChapters: (n) => `Show all ${n} chapters`,
     hoursMin: (h, m) => (h > 0 ? `${h} h ${m} min` : `${m} min`),
     sleepIn: (t) => `Sleeps in ${t}`,
   },
@@ -780,6 +782,10 @@ function render() {
   }
   updatePlayUi();
   updateTimeUi();
+  if (state.sheet && state.sheet.type === 'chapters') {
+    const current = app.querySelector('.sheet .track.current');
+    if (current) current.scrollIntoView({ block: 'center' });
+  }
 }
 
 function shell(content) {
@@ -947,6 +953,21 @@ function renderLibrary() {
 
 // ---- book detail
 
+const INLINE_CHAPTERS = 25;
+
+function eqHtml(playing) {
+  return `<span class="eq ${playing ? '' : 'paused'}"><span></span><span></span><span></span></span>`;
+}
+
+function trackHtml(book, i, currentIdx, isNow, playing) {
+  const c = book.chapters[i];
+  return `<button class="track ${i === currentIdx ? 'current' : ''}" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(c.start_sec)}"${i === currentIdx ? ' data-current="1"' : ''}>
+      <span class="n">${i === currentIdx && isNow ? eqHtml(playing) : i + 1}</span>
+      <span>${esc(c.title || t('chapterN', i + 1))}</span>
+      <span class="len">${fmtTime(chapterLength(book, i))}</span>
+    </button>`;
+}
+
 function renderBook() {
   const b = state.detail;
   if (!b) return `<header class="topbar"><button class="icon ghost" data-action="back">${ICON.back}</button></header><p class="muted center">…</p>`;
@@ -959,18 +980,21 @@ function renderBook() {
   const label = playing ? t('pause') : progress.finished ? t('startOver') : pos > 0 ? t('resume') : t('play');
   const currentIdx = isNow ? chapterIndexAt(b, pos) : chapterIndexAt(b, pos);
 
-  const chapters = b.chapters.length
-    ? b.chapters.map((c, i) => `<button class="track ${i === currentIdx ? 'current' : ''}" data-action="play-chapter" data-id="${esc(b.id)}" data-sec="${Number(c.start_sec)}">
-        <span class="n">${i === currentIdx && isNow ? `<span class="eq ${playing ? '' : 'paused'}"><span></span><span></span><span></span></span>` : i + 1}</span>
-        <span>${esc(c.title || t('chapterN', i + 1))}</span>
-        <span class="len">${fmtTime(chapterLength(b, i))}</span>
-      </button>`).join('')
+  // Long chapter lists stay in the bottom sheet; the page shows a preview.
+  const total = b.chapters.length;
+  const shown = total > INLINE_CHAPTERS ? INLINE_CHAPTERS : total;
+  const from = total > INLINE_CHAPTERS && currentIdx > INLINE_CHAPTERS - 4 ? Math.min(currentIdx - 2, total - shown) : 0;
+  const chapters = total
+    ? b.chapters.slice(from, from + shown).map((c, i) => trackHtml(b, from + i, currentIdx, isNow, playing)).join('')
     : `<button class="track ${isNow ? 'current' : ''}" data-action="play-chapter" data-id="${esc(b.id)}" data-sec="-1">
-        <span class="n">${isNow ? `<span class="eq ${playing ? '' : 'paused'}"><span></span><span></span><span></span></span>` : 1}</span>
+        <span class="n">${isNow ? eqHtml(playing) : 1}</span>
         <span>${esc(t('fullBook'))}</span><span class="len">${fmtTime(duration)}</span>
       </button>`;
+  const moreChapters = total > shown
+    ? `<button class="ghost" style="width:100%;margin-top:8px" data-action="sheet-chapters" data-id="${esc(b.id)}">${esc(t('showAllChapters', total))}</button>`
+    : '';
 
-  const bookmarks = b.bookmarks.length ? `<section class="section"><div class="section-head"><h2>${esc(t('bookmarks'))}</h2></div><div class="list">${b.bookmarks.map((bm) => bookmarkHtml(b, bm)).join('')}</div></section>` : '';
+  const bookmarks = b.bookmarks.length ? `<section class="section"><div class="section-head"><h2>${esc(t('bookmarks'))}</h2><span class="muted small">${b.bookmarks.length}</span></div><div class="list">${b.bookmarks.map((bm) => bookmarkHtml(b, bm)).join('')}</div></section>` : '';
 
   return `<header class="topbar">
       <button class="icon ghost" data-action="back" aria-label="${esc(t('back'))}">${ICON.back}</button>
@@ -990,11 +1014,12 @@ function renderBook() {
         <button class="${progress.finished ? 'on' : ''}" data-action="toggle-finished" data-id="${esc(b.id)}">${ICON.check}${esc(progress.finished ? t('markUnfinished') : t('markFinished'))}</button>
         <button data-action="restart" data-id="${esc(b.id)}">${ICON.restart}${esc(t('restart'))}</button>
       </div>
-      <section class="section" style="margin-top:8px">
-        <div class="section-head"><h2>${esc(t('chapters'))}</h2><span class="muted small">${b.chapters.length || 1}</span></div>
-        <div class="tracklist">${chapters}</div>
-      </section>
       ${bookmarks}
+      <section class="section" style="margin-top:8px">
+        <div class="section-head"><h2>${esc(t('chapters'))}</h2><span class="muted small">${total || 1}</span></div>
+        <div class="tracklist">${chapters}</div>
+        ${moreChapters}
+      </section>
     </div>`;
 }
 
@@ -1114,7 +1139,7 @@ function renderPlayer() {
         <button class="icon skip" data-action="skip" data-delta="${settings.skipFwd}" aria-label="+${settings.skipFwd}s">${ICON.skipFwd}<small>${settings.skipFwd}</small></button>
       </div>
       <div class="toolbar">
-        <button data-action="sheet-chapters" ${b.chapters.length ? '' : 'disabled'}>${ICON.chapters}<span>${esc(t('chapters'))}</span></button>
+        <button data-action="sheet-chapters" data-id="${esc(b.id)}" ${b.chapters.length ? '' : 'disabled'}>${ICON.chapters}<span>${esc(t('chapters'))}</span></button>
         <button data-action="sheet-sleep" class="${sleepActive() ? 'on' : ''}">${ICON.moon}<span id="sleep-label">${esc(sleepLabel())}</span></button>
         <button data-action="sheet-speed">${ICON.gauge}<span>${settings.speed}×</span></button>
         <button data-action="add-bookmark">${ICON.bookmark}<span>${esc(t('addBookmark'))}</span></button>
@@ -1128,15 +1153,14 @@ function renderPlayer() {
 function renderSheet() {
   const s = state.sheet;
   let body = '';
-  if (s.type === 'chapters' && state.now) {
-    const idx = chapterIndexAt(state.now, currentPos());
-    const playing = !audio.paused && !audio.ended;
-    body = `<h3>${esc(t('chapters'))}</h3><div class="tracklist">${state.now.chapters.map((c, i) => `
-      <button class="track ${i === idx ? 'current' : ''}" data-action="play-chapter" data-id="${esc(state.now.id)}" data-sec="${Number(c.start_sec)}" data-close="1">
-        <span class="n">${i === idx ? `<span class="eq ${playing ? '' : 'paused'}"><span></span><span></span><span></span></span>` : i + 1}</span>
-        <span>${esc(c.title || t('chapterN', i + 1))}</span>
-        <span class="len">${fmtTime(chapterLength(state.now, i))}</span>
-      </button>`).join('')}</div>`;
+  if (s.type === 'chapters') {
+    const book = [state.now, state.detail].find((b) => b && b.id === s.bookId) || state.now;
+    if (!book) return '';
+    const isNow = state.now && state.now.id === book.id;
+    const idx = chapterIndexAt(book, isNow ? currentPos() : Number(book.progress?.position_sec) || 0);
+    const playing = isNow && !audio.paused && !audio.ended;
+    body = `<h3>${esc(t('chapters'))} <span class="muted small">${book.chapters.length}</span></h3>
+      <div class="tracklist">${book.chapters.map((c, i) => trackHtml(book, i, idx, isNow, playing).replace('data-action="play-chapter"', 'data-action="play-chapter" data-close="1"')).join('')}</div>`;
   } else if (s.type === 'sleep') {
     body = `<img class="mascot" src="/img/nook-pixel.png" alt=""><h3 class="center">${esc(t('sleepTimer'))}</h3>
       <p class="muted small center" style="margin-top:0">${esc(t('sleepHint'))}</p>
@@ -1260,7 +1284,7 @@ app.addEventListener('click', (event) => {
     case 'toggle-play': togglePlay(); break;
     case 'skip': skip(Number(target.dataset.delta)); break;
     case 'toggle-total': state.showTotal = !state.showTotal; updateTimeUi(); break;
-    case 'sheet-chapters': openSheet({ type: 'chapters' }); break;
+    case 'sheet-chapters': openSheet({ type: 'chapters', bookId: id || (state.now && state.now.id) }); break;
     case 'sheet-sleep': openSheet({ type: 'sleep' }); break;
     case 'sheet-speed': openSheet({ type: 'speed' }); break;
     case 'sheet-sort': openSheet({ type: 'sort' }); break;
