@@ -1,0 +1,19 @@
+{
+  "name": "mr-nook",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mr. Nook: private audiobook player (PWA) on Cloudflare Workers, R2 and D1",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "setup": "bash scripts/setup.sh",
+    "migrate:local": "wrangler d1 migrations apply mr-nook --local",
+    "migrate:remote": "wrangler d1 migrations apply mr-nook --remote",
+    "icons": "node scripts/make-icons.mjs",
+    "books": "node scripts/books.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
