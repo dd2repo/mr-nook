@@ -105,6 +105,8 @@ const STRINGS = {
     todayAt: 'Heute um',
     yesterdayAt: 'Gestern um',
     show: 'Anzeigen',
+    nightRemoved: 'Nacht gelöscht',
+    whatWeThought: 'Was wir dazu gesagt haben',
     awakeAt: 'wach bei',
     ranUntil: 'lief bis',
     timerStopped: 'Timer aus bei',
@@ -321,6 +323,8 @@ const STRINGS = {
     todayAt: 'Today at',
     yesterdayAt: 'Yesterday at',
     show: 'Show',
+    nightRemoved: 'Night removed',
+    whatWeThought: 'What we said about these',
     awakeAt: 'awake at',
     ranUntil: 'ran until',
     timerStopped: 'timer off at',
@@ -488,6 +492,7 @@ const state = {
   stats: null,
   totalSeconds: 0,
   achievements: { mine: [], inbox: [], cheers: [] },
+  recentReviews: null,
   miniCollapsed: false,
   sleepRun: null,   // { bookId, startedSec, startedAt, kind }
 };
@@ -1086,7 +1091,7 @@ function writeQueue(queue) {
 }
 
 function saveProgressFor(bookId, position, finished, { touch = true, useBeacon = false } = {}) {
-  if (!state.user) return;
+  if (!state.user) return Promise.resolve();
   const payload = { user_id: state.user.id, book_id: bookId, position_sec: position, finished, touch };
   const queue = readQueue();
   queue[`${state.user.id}:${bookId}`] = payload;
@@ -1094,9 +1099,9 @@ function saveProgressFor(bookId, position, finished, { touch = true, useBeacon =
 
   if (useBeacon && navigator.sendBeacon) {
     navigator.sendBeacon('/api/progress', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-    return;
+    return Promise.resolve();
   }
-  api('/progress', { method: 'PUT', body: payload })
+  return api('/progress', { method: 'PUT', body: payload })
     .then(() => {
       const after = readQueue();
       const still = after[`${state.user.id}:${bookId}`];
@@ -1169,7 +1174,7 @@ async function markFinished(book, finished) {
   }
   applyLocalProgress(book.id, { position_sec: position, finished: finished ? 1 : 0 });
   render();
-  saveProgressFor(book.id, position, finished ? 1 : 0, { touch: false });
+  await saveProgressFor(book.id, position, finished ? 1 : 0, { touch: false });
 }
 
 async function restartBook(book) {
@@ -1315,6 +1320,27 @@ function flushSleepQueue() {
 }
 window.addEventListener('online', flushSleepQueue);
 
+function deleteSleepRun(id) {
+  let removed = null;
+  for (const book of [state.detail, state.now]) {
+    if (!book || !book.sleep_sessions) continue;
+    const hit = book.sleep_sessions.find((r) => r.id === id);
+    if (hit) removed = { run: hit, bookId: book.id };
+    book.sleep_sessions = book.sleep_sessions.filter((r) => r.id !== id);
+  }
+  render();
+  api(`/sleep-sessions/${id}`, { method: 'DELETE' }).catch((err) => toast(`${t('error')}: ${err.message}`));
+  if (removed) {
+    toast(t('nightRemoved'), t('undo'), () => {
+      queueSleepRun({
+        user_id: state.user.id, book_id: removed.bookId,
+        started_sec: removed.run.started_sec, stopped_sec: removed.run.stopped_sec,
+        kind: removed.run.kind, started_at: removed.run.started_at || removed.run.stopped_at,
+      });
+    });
+  }
+}
+
 // Called when the timer actually pauses playback.
 function recordSleepRun() {
   const run = state.sleepRun;
@@ -1369,6 +1395,14 @@ setInterval(() => {
     if (enforceSleepDeadline()) return;
     const remaining = state.sleep.until - Date.now();
     if (!audio.paused && remaining < SLEEP_FADE_MS) audio.volume = Math.max(0.05, remaining / SLEEP_FADE_MS);
+  } else if (state.sleep.endOfChapter && state.now && !audio.paused) {
+    // Fade towards the next chapter mark so both modes end the same gentle way.
+    const chapters = state.now.chapters || [];
+    const next = chapters[state.sleep.startChapter + 1];
+    if (next) {
+      const left = (Number(next.start_sec) - currentPos()) / (audio.playbackRate || 1) * 1000;
+      audio.volume = left < SLEEP_FADE_MS ? Math.max(0.05, left / SLEEP_FADE_MS) : 1;
+    }
   }
   const label = document.getElementById('sleep-label');
   if (label) label.textContent = sleepLabel();
@@ -1776,7 +1810,16 @@ async function saveRating(bookId, rating, textOverride) {
     } catch { /* ignore */ }
     toast(t('reviewSaved'));
   } catch (err) {
-    if (/finish/.test(err.message)) toast(t('rateHint'));
+    if (/finish/.test(err.message)) {
+      // Most likely the "finished" flag has not landed yet; give it one more go.
+      const book = [state.detail, state.now].find((b) => b && b.id === bookId);
+      if (book && book.progress && book.progress.finished) {
+        await saveProgressFor(bookId, Math.floor(Number(book.duration_sec) || 0), 1, { touch: false });
+        api('/reviews', { method: 'PUT', body: payload }).then(() => toast(t('reviewSaved'))).catch(() => toast(t('rateHint')));
+      } else {
+        toast(t('rateHint'));
+      }
+    }
   }
 }
 
@@ -1929,6 +1972,7 @@ function sleepHistoryHtml(book) {
           <div class="row" style="gap:8px">
             <button class="small" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(r.started_sec)}">${esc(t('jumpBack'))}</button>
             <button class="small ghost" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(r.stopped_sec)}">${esc(t('toStop'))}</button>
+            <button class="small ghost" style="margin-left:auto;color:var(--terracotta)" data-action="delete-sleep" data-id="${r.id}" aria-label="${esc(t('delete'))}">${ICON.trash}</button>
           </div>
         </div>`;
       }).join('')}</div>
@@ -2065,6 +2109,22 @@ function fmtHours(seconds) {
   return h > 0 ? `${fmtNumber(h)} ${t('hoursShort')} ${m} ${t('minutes')}` : `${m} ${t('minutes')}`;
 }
 
+// What the two of you thought about the last books, in one place.
+function recentReviewsHtml() {
+  const rows = state.recentReviews;
+  if (!rows || !rows.length) return '';
+  return `<h3 style="margin-top:20px">${esc(t('whatWeThought'))}</h3>
+    <div class="list" style="margin-top:8px">${rows.slice(0, 8).map((r) => `
+      <button class="history-row" data-action="open-book-sheet" data-id="${esc(r.book_id)}">
+        ${coverHtml(r, 'hist-cover')}
+        <div style="min-width:0;text-align:left">
+          <div style="font-weight:700">${esc(r.book_title)}</div>
+          <div class="muted small">${esc(r.user_name)}${r.text ? `: ${esc(r.text.slice(0, 60))}${r.text.length > 60 ? '…' : ''}` : ''}</div>
+        </div>
+        ${r.rating ? nooksHtml(r.rating) : ''}
+      </button>`).join('')}</div>`;
+}
+
 function statsSheetHtml() {
   const st = state.stats;
   if (!st) return '<p class="muted small">…</p>';
@@ -2080,6 +2140,7 @@ function statsSheetHtml() {
     </div>
     ${st.days.length ? `<div class="spark">${[...st.days].reverse().map((d) => `<span style="height:${Math.max(6, Math.round((d.seconds / maxDay) * 100))}%" title="${esc(d.day)}"></span>`).join('')}</div>
       <p class="muted small center" style="margin-top:2px">${esc(t('lastDays'))}</p>` : ''}
+    ${recentReviewsHtml()}
     <h3 style="margin-top:20px">${esc(t('badges'))}</h3>
     ${nextHours ? `<p class="muted small" style="margin-top:-6px">${esc(t('nextBadge'))} ${esc(badgeName(`hours-${nextHours}`))} · ${esc(fmtHours(nextHours * 3600 - st.total_seconds))} ${esc(t('toGo'))}</p>` : ''}
     ${mine.length ? `<div class="badge-grid">${mine.map((a) => `
@@ -3005,6 +3066,7 @@ app.addEventListener('click', (event) => {
     case 'toggle-play': markAwake(); togglePlay(); break;
     case 'skip': markAwake(); skip(Number(target.dataset.delta)); break;
     case 'step-chapter': markAwake(); stepChapter(Number(target.dataset.dir)); break;
+    case 'delete-sleep': deleteSleepRun(Number(id)); break;
     case 'extend-sleep': extendSleep(Number(target.dataset.min)); break;
     case 'toggle-total': state.showTotal = !state.showTotal; updateTimeUi(); break;
     case 'sheet-chapters': openSheet({ type: 'chapters', bookId: id || (state.now && state.now.id) }); break;
@@ -3016,7 +3078,11 @@ app.addEventListener('click', (event) => {
     case 'sheet-wish': openSheet({ type: 'wish' }); break;
     case 'sheet-stats':
       openSheet({ type: 'stats' });
-      Promise.all([loadStats(), loadAchievements()]).then(render).catch(() => {});
+      Promise.all([
+        loadStats(),
+        loadAchievements(),
+        api('/reviews').then((rows) => { state.recentReviews = rows; }).catch(() => {}),
+      ]).then(render).catch(() => {});
       break;
     case 'badge-detail': {
       const a = (state.achievements.mine || []).find((x) => x.id === Number(id));
@@ -3040,6 +3106,7 @@ app.addEventListener('click', (event) => {
       openSheet({ type: 'all-bookmarks' });
       api(`/bookmarks?user=${state.user.id}`).then((rows) => { state.allBookmarks = rows; render(); }).catch(() => { state.allBookmarks = []; render(); });
       break;
+    case 'open-book-sheet': closeSheet(); setTimeout(() => go('book', id), 0); break;
     case 'open-bookmark':
       closeSheet();
       loadIntoPlayer(id, { autoplay: true, startAt: Number(target.dataset.sec) }).catch((err) => toast(`${t('error')}: ${err.message}`));

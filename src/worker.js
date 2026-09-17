@@ -321,7 +321,7 @@ const BOOK_LIST_SELECT = `
            WHERE r.book_id = b.id AND r.user_id != ?1 ORDER BY r.rating DESC LIMIT 1) AS their_name,
          p.position_sec, p.finished, p.favorite, p.updated_at AS last_played
     FROM books b
-    LEFT JOIN progress p ON p.book_id = b.id AND p.user_id = ?`;
+    LEFT JOIN progress p ON p.book_id = b.id AND p.user_id = ?1`;
 
 async function listBooks(env, url) {
   const userId = requireInt(url.searchParams.get('user'), 'user');
