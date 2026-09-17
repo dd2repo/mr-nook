@@ -3007,7 +3007,7 @@ function renderSheet() {
       <p class="muted small center" style="margin:16px 0 8px">${esc(t('pickColor'))}</p>
       <div class="swatches" style="justify-content:center">${PALETTE.map((c) => `<button class="swatch ${user.color === c ? 'active' : ''}" data-action="color" data-id="${user.id}" data-color="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>`;
   }
-  return `<div class="scrim" data-action="close-sheet"></div><div class="sheet"><div class="grip"></div><div class="inner">${body}</div></div>`;
+  return `<div class="scrim" data-action="close-sheet"></div><div class="sheet"><button class="grip" data-action="close-sheet" aria-label="${esc(t('close'))}"></button><div class="inner">${body}</div></div>`;
 }
 
 // ---- live UI updates (no re-render)
@@ -3305,15 +3305,44 @@ app.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && event.target.dataset.bookmark) event.target.blur();
 });
 
-// Swipe down on the player cover closes the player; swipe the mini bar away to uncover
-// whatever sits behind it.
+// The grip on a sheet looks draggable, so it has to be draggable. Same for the player
+// cover and the mini bar.
+const SHEET_DISMISS_PX = 110;
 let touchStart = null;
+
+function sheetElement() {
+  return app.querySelector('.sheet');
+}
+
 app.addEventListener('touchstart', (event) => {
   const cover = event.target.closest('.player .cover-large');
   const mini = event.target.closest('.mini');
-  if (!cover && !mini) { touchStart = null; return; }
-  touchStart = { y: event.touches[0].clientY, x: event.touches[0].clientX, target: cover ? 'player' : 'mini' };
+  const sheet = event.target.closest('.sheet');
+  if (!cover && !mini && !sheet) { touchStart = null; return; }
+  const y = event.touches[0].clientY;
+  // A sheet with scrolled content should scroll, not follow the finger; the grip always drags.
+  if (sheet && sheet.scrollTop > 0 && !event.target.closest('.grip')) { touchStart = null; return; }
+  touchStart = { y, x: event.touches[0].clientX, target: cover ? 'player' : mini ? 'mini' : 'sheet', moved: 0 };
 }, { passive: true });
+
+app.addEventListener('touchmove', (event) => {
+  if (!touchStart || touchStart.target !== 'sheet') return;
+  const dy = event.touches[0].clientY - touchStart.y;
+  touchStart.moved = dy;
+  const el = sheetElement();
+  if (!el) return;
+  // Only downward, with a little resistance so it feels attached.
+  el.style.transform = dy > 0 ? `translateY(${dy * 0.85}px)` : '';
+  el.style.transition = 'none';
+}, { passive: true });
+
+function releaseSheet(dismiss) {
+  const el = sheetElement();
+  if (!el) return;
+  el.style.transition = 'transform 0.18s ease-out';
+  el.style.transform = dismiss ? 'translateY(105%)' : '';
+}
+
 app.addEventListener('touchend', (event) => {
   if (!touchStart) return;
   const dy = event.changedTouches[0].clientY - touchStart.y;
@@ -3325,6 +3354,16 @@ app.addEventListener('touchend', (event) => {
     state.miniCollapsed = true;
     render();
   }
+  if (kind === 'sheet') {
+    const dismiss = dy > SHEET_DISMISS_PX;
+    releaseSheet(dismiss);
+    if (dismiss) setTimeout(() => closeSheet(), 150);
+  }
+}, { passive: true });
+
+app.addEventListener('touchcancel', () => {
+  if (touchStart && touchStart.target === 'sheet') releaseSheet(false);
+  touchStart = null;
 }, { passive: true });
 
 boot().catch(fail);
