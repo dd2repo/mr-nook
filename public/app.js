@@ -133,6 +133,7 @@ const STRINGS = {
     rateHint: 'Bewerten kannst du, wenn du das Buch durch hast.',
     rateHintUnfinished: 'Du hast das Buch zurück auf ungehört gesetzt. Dein Eindruck bleibt trotzdem stehen.',
     howWasIt: 'Wie war es?',
+    rate: 'Bewerten',
     sheWrote: 'hat was geschrieben',
     reviewDeleted: 'Eindruck zurückgenommen',
     reviewPlaceholder: 'Deine Notiz …',
@@ -363,6 +364,7 @@ const STRINGS = {
     rateHint: 'You can rate once you have finished the book.',
     rateHintUnfinished: 'You set this book back to unheard. What you wrote stays.',
     howWasIt: 'How was it?',
+    rate: 'Rate',
     sheWrote: 'left a note',
     reviewDeleted: 'Note taken back',
     reviewPlaceholder: 'What did you like?',
@@ -517,6 +519,7 @@ const state = {
   totalSeconds: 0,
   achievements: { mine: [], inbox: [], cheers: [] },
   recentReviews: null,
+  ratingOpen: false,
   miniCollapsed: false,
   sleepRun: null,   // { bookId, startedSec, startedAt, kind }
 };
@@ -1917,7 +1920,29 @@ function deleteRating(bookId) {
 }
 
 // A compact row on the page; rating and reading happens in a sheet.
-// Two people, two opinions. Averaging them would describe nobody.
+// Rating is a nice-to-have, so it only appears once it is usable or used: a chip beside
+// the other book actions, opening the sheet. Two people, two opinions, never averaged.
+// Folded shut at the end of the page. Open it if you care, ignore it otherwise.
+function ratingFoldHtml(book) {
+  const all = book.reviews || [];
+  const mine = all.find((r) => r.user_id === state.user.id);
+  const theirs = all.find((r) => r.user_id !== state.user.id);
+  const score = (r) => (r && r.rating ? `${r.rating}` : '–');
+  const summary = all.length
+    ? `${esc(t('you'))} ${score(mine)} · ${esc(theirs ? theirs.user_name : otherName())} ${score(theirs)}`
+    : '';
+
+  return `<details class="fold" ${state.ratingOpen ? 'open' : ''}>
+      <summary>
+        <img src="/img/nook-pixel.png" alt="" class="fold-nook">
+        <span class="fold-title">${esc(t('howWasIt'))}</span>
+        <span class="muted small">${summary}</span>
+        <span class="fold-arrow">${ICON.down}</span>
+      </summary>
+      <div class="fold-body">${reviewSectionHtml(book)}</div>
+    </details>`;
+}
+
 function ratingRowHtml(book) {
   const all = book.reviews || [];
   const mine = all.find((r) => r.user_id === state.user.id);
@@ -1976,9 +2001,7 @@ function reviewSectionHtml(book) {
         </div>`).join('')
     : '';
 
-  return `<section class="section">
-      <div class="card" style="box-shadow:none;padding:0">${mineBlock}${othersBlock}</div>
-    </section>`;
+  return `${mineBlock}${othersBlock}`;
 }
 
 function fmtWhenShort(ts) {
@@ -2557,7 +2580,7 @@ function renderBook() {
   const from = total > INLINE_CHAPTERS && currentIdx > INLINE_CHAPTERS - 4 ? Math.min(currentIdx - 2, total - shown) : 0;
   const chapters = total
     ? b.chapters.slice(from, from + shown).map((c, i) => trackHtml(b, from + i, currentIdx, isNow, playing)).join('')
-    : `<button class="track ${isNow ? 'current' : ''}" data-action="play-chapter" data-id="${esc(b.id)}" data-sec="-1">
+    : `<button class="track ${isNow ? 'current' : ''}" data-action="play-chapter" data-id="${esc(b.id)}" data-sec="-1" data-idx="0">
         <span class="n">${isNow ? eqHtml(playing) : 1}</span>
         <span>${esc(t('fullBook'))}</span><span class="len">${fmtTime(duration)}</span>
       </button>`;
@@ -2599,9 +2622,9 @@ function renderBook() {
         ${moreChapters}
       </section>
       <section class="section">
-        ${ratingRowHtml(b)}
-        <div style="margin-top:10px">${downloadRowHtml(b)}</div>
+        ${downloadRowHtml(b)}
       </section>
+      ${ratingFoldHtml(b)}
     </div>`;
 }
 
@@ -3032,6 +3055,7 @@ function updateTrackHighlight(idx) {
     // A list may show a window of chapters, so trust each track's own index.
     tracks.forEach((track) => {
       const own = Number(track.dataset.idx);
+      if (!Number.isFinite(own)) return;
       const isCurrent = own === idx;
       if (track.classList.contains('current') !== isCurrent) track.classList.toggle('current', isCurrent);
       const slot = track.firstElementChild;
@@ -3311,6 +3335,11 @@ app.addEventListener('change', (event) => {
     if (file) uploadAvatar(Number(el.dataset.avatarFile), file).catch((err) => toast(`${t('error')}: ${err.message}`));
   }
 });
+
+// <details> keeps its own state, so mirror it instead of re-rendering.
+app.addEventListener('toggle', (event) => {
+  if (event.target.classList && event.target.classList.contains('fold')) state.ratingOpen = event.target.open;
+}, true);
 
 app.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && event.target.dataset.bookmark) event.target.blur();
