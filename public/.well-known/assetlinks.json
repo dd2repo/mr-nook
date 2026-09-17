@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "dev.workers.mrnook",
+    "sha256_cert_fingerprints": ["7F:0A:91:16:B8:40:78:4B:08:3A:74:4D:89:68:D0:D8:00:40:11:19:F1:46:4F:17:0B:0A:91:78:0A:C7:F0:74"]
+  }
+}]

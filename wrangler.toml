@@ -1,0 +1,23 @@
+name = "mr-nook"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+preview_urls = false
+account_id = "a9a4ea4a5a4e8499b5416cf12c05f6f6"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mr-nook"
+database_id = "c299b137-6cb8-4ef6-a966-96d1276873d5"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "mr-nook"
+
+[observability]
+enabled = true
