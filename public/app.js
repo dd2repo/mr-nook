@@ -1494,6 +1494,8 @@ setInterval(() => {
   if (label) label.textContent = sleepLabel();
   const mini = document.getElementById('mini-sleep');
   if (mini) mini.textContent = sleepShort();
+  // Rewriting the metadata every second would make the notification flicker.
+  if (state.now && sleepNotificationLine() !== lastNotificationLine) updateMediaSession();
 }, 1000);
 
 // ---- bookmarks
@@ -1559,14 +1561,29 @@ async function restoreBookmark(bookId, bookmark) {
 
 // ---- media session
 
+// Android shows title, artist and album in the media notification. The album line is
+// free, so the sleep countdown rides along there.
+function sleepNotificationLine() {
+  if (state.sleep.until > 0) {
+    // Rounding up made a freshly set 15 minute timer announce itself as 16.
+    const mins = Math.max(1, Math.round((state.sleep.until - Date.now()) / 60000));
+    return `Mr. Nook · ${t('sleepIn', `${mins} ${t('minutes')}`)}`;
+  }
+  if (state.sleep.endOfChapter) return `Mr. Nook · ${t('endOfChapter')}`;
+  return 'Mr. Nook';
+}
+
+let lastNotificationLine = '';
+
 function updateMediaSession() {
   if (!('mediaSession' in navigator) || !state.now) return;
   const book = state.now;
+  lastNotificationLine = sleepNotificationLine();
   try {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: book.title,
       artist: book.author || '',
-      album: 'Mr. Nook',
+      album: lastNotificationLine,
       artwork: book.has_cover ? [{ src: `${location.origin}/media/${book.id}/cover`, sizes: '512x512', type: 'image/jpeg' }] : [],
     });
   } catch { /* older browsers */ }
@@ -2872,7 +2889,7 @@ function renderMini() {
     <span class="bar" id="mini-bar"></span>
     ${coverHtml(b)}
     <div class="text"><div style="font-weight:700">${esc(b.title)}</div><div class="muted small" id="mini-sub">${esc(idx >= 0 ? chapterTitle(b, idx) : b.author || '')}</div></div>
-    <button class="mini-sleep ${sleepActive() ? 'on' : ''}" data-action="sheet-sleep" aria-label="${esc(t('sleepTimer'))}">${ICON.moon}<span id="mini-sleep">${esc(sleepShort())}</span></button>
+    ${sleepActive() ? `<span class="mini-sleep" title="${esc(t('sleepTimer'))}">${ICON.moon}<span id="mini-sleep">${esc(sleepShort())}</span></span>` : ''}
     <button class="icon" data-action="toggle-play" data-play-button aria-label="${esc(t('play'))}">${ICON.play}</button>
   </div>`;
 }
@@ -3218,7 +3235,7 @@ app.addEventListener('click', (event) => {
     case 'extend-sleep': extendSleep(Number(target.dataset.min)); break;
     case 'toggle-total': state.showTotal = !state.showTotal; updateTimeUi(); break;
     case 'sheet-chapters': openSheet({ type: 'chapters', bookId: id || (state.now && state.now.id) }); break;
-    case 'sheet-sleep': event.stopPropagation(); openSheet({ type: 'sleep' }); break;
+    case 'sheet-sleep': openSheet({ type: 'sleep' }); break;
     case 'sheet-speed': openSheet({ type: 'speed' }); break;
     case 'sheet-sort': openSheet({ type: 'sort' }); break;
     case 'sheet-bookmarks': openSheet({ type: 'bookmarks', bookId: id || (state.now && state.now.id) }); break;
