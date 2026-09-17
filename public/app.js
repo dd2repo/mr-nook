@@ -1324,27 +1324,38 @@ function writeSleepQueue(list) {
   try { localStorage.setItem(SLEEP_QUEUE_KEY, JSON.stringify(list.slice(-20))); } catch { /* ignore */ }
 }
 
+// Each queued night carries its own id. Removing by position would drop the wrong row
+// when two uploads finish at once.
+let sleepFlushing = false;
+
 function queueSleepRun(payload) {
   const queue = readSleepQueue();
-  queue.push(payload);
+  queue.push({ ...payload, qid: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}` });
   writeSleepQueue(queue);
   flushSleepQueue();
 }
 
-function flushSleepQueue() {
-  const queue = readSleepQueue();
-  if (!queue.length) return;
-  queue.forEach((payload, index) => {
-    api('/sleep-sessions', { method: 'POST', body: payload })
-      .then((row) => {
-        writeSleepQueue(readSleepQueue().filter((_, i) => i !== index));
+async function flushSleepQueue() {
+  if (sleepFlushing) return;
+  sleepFlushing = true;
+  try {
+    // One at a time, so a retry never races itself.
+    for (const entry of readSleepQueue()) {
+      const { qid, ...payload } = entry;
+      try {
+        const row = await api('/sleep-sessions', { method: 'POST', body: payload });
+        writeSleepQueue(readSleepQueue().filter((e) => e.qid !== qid));
         for (const d of [state.now, state.detail]) {
-          if (d && d.id === payload.book_id) d.sleep_sessions = [row, ...(d.sleep_sessions || [])].slice(0, 5);
+          if (d && d.id === payload.book_id) d.sleep_sessions = [row, ...(d.sleep_sessions || [])].slice(0, 8);
         }
         render();
-      })
-      .catch(() => {});
-  });
+      } catch {
+        break;   // still offline; the rest waits for the next attempt
+      }
+    }
+  } finally {
+    sleepFlushing = false;
+  }
 }
 window.addEventListener('online', flushSleepQueue);
 
