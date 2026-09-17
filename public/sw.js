@@ -3,7 +3,7 @@
 // A downloaded book is stored as one full response in AUDIO_CACHE. The audio element always
 // asks for byte ranges, so a cached book gets sliced here and handed back as a 206. Books
 // that were not downloaded go straight to the network.
-const VERSION = 'mr-nook-v17';
+const VERSION = 'mr-nook-v18';
 const AUDIO_CACHE = 'mr-nook-audio';
 const SHELL = [
   '/',

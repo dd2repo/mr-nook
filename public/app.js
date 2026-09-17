@@ -31,7 +31,7 @@ const STRINGS = {
     recentlyAdded: 'Neu dabei',
     recentlyPlayed: 'Zuletzt gehört',
     favorites: 'Favoriten',
-    home: 'Home',
+    home: 'Start',
     library: 'Bibliothek',
     search: 'Suche',
     settings: 'Einstellungen',
@@ -42,7 +42,7 @@ const STRINGS = {
     sortTitle: 'Titel',
     sortAuthor: 'Autor',
     sortLastPlayed: 'Zuletzt gehört',
-    sortAdded: 'Neu hinzugefügt',
+    sortAdded: 'Neu dabei',
     sortProgress: 'Fortschritt',
     emptyNook: 'Dein Nook ist noch ein bisschen leer.',
     addFirst: 'Erstes Hörbuch hinzufügen',
@@ -50,17 +50,17 @@ const STRINGS = {
     nothingInFilter: 'In dieser Ansicht ist nichts.',
     pickSomething: 'Such dir etwas aus der Bibliothek aus.',
     addAudiobook: 'Hörbuch hinzufügen',
-    addHint: 'Hörbücher kommen über das Skript auf dem Mac in den Nook. Eine MP3 pro Buch, Cover optional:',
+    addHint: 'Neue Bücher legt Yannick am Mac ein.',
     searchPlaceholder: 'Titel oder Autor',
     play: 'Abspielen',
     resume: 'Weiterhören',
-    startOver: 'Von Anfang',
+    startOver: 'Von vorn',
     pause: 'Pause',
     left: 'übrig',
     total: 'gesamt',
     markFinished: 'Als fertig markieren',
-    markUnfinished: 'Fertig zurücknehmen',
-    restart: 'Neu starten',
+    markUnfinished: 'Doch nicht fertig',
+    restart: 'Buch von vorn',
     favorite: 'Favorit',
     chapters: 'Kapitel',
     fullBook: 'Ganzes Buch',
@@ -78,7 +78,7 @@ const STRINGS = {
     downloadRemoved: 'Vom Gerät gelöscht',
     notEnoughSpace: 'Zu wenig Speicher frei',
     offlineHint: 'Offline hörbar, kein Datenverbrauch.',
-    offlineMode: 'Offline. Nur heruntergeladene Bücher spielen.',
+    offlineMode: 'Offline. Es lassen sich nur heruntergeladene Bücher abspielen.',
     streamHint: 'Wird über das Internet geladen.',
     wishes: 'Wünsche',
     wishBook: 'Buch wünschen',
@@ -99,22 +99,30 @@ const STRINGS = {
     securityHint: 'Streams und Downloads laufen über diese verschlüsselte Verbindung.',
     sleepHistory: 'Einschlaf-Verlauf',
     sleepHistoryHint: 'Alle Zeiten sind Stellen im Buch, keine Uhrzeiten.',
-    lastAwakeIn: 'Zuletzt wach im Buch bei',
-    thenRan: 'Danach lief noch',
-    untilPos: 'bis',
+    lastAwakeIn: 'Zuletzt wach nach',
+    thenRan: 'Lief noch',
+    untilPos: 'weiter, bis',
     todayAt: 'Heute um',
     yesterdayAt: 'Gestern um',
     show: 'Anzeigen',
     nightRemoved: 'Nacht gelöscht',
     whatWeThought: 'Was wir dazu gesagt haben',
+    thisBook: 'Dieses Buch',
+    manage: 'Verwalten',
+    allBooks: 'Alle Bücher',
+    viewToggle: 'Ansicht wechseln',
+    chapterShort: 'Kap.',
+    refreshed: 'Neu geladen',
+    speedSticks: 'Gilt ab jetzt für alle Bücher.',
+    searchIdle: 'Tippe los, ich schaue in der Bibliothek nach.',
     awakeAt: 'wach bei',
     ranUntil: 'lief bis',
     timerStopped: 'Timer aus bei',
-    chapterModeActive: 'Kapitelende ist eingestellt.',
+    chapterModeActive: 'Bleibt beim Kapitelende. Die fünf Minuten gibt es nur beim Timer.',
     noRealChapters: 'Dieses Buch hat keine echten Kapitel.',
     sleptThrough: 'verschlafen',
-    toStop: 'Wo er ausging',
-    jumpBack: 'Dorthin springen',
+    toStop: 'Zum Stopp',
+    jumpBack: 'Zur wachen Stelle',
     noSleepHistory: 'Noch nichts eingeschlafen.',
     rating: 'Bewertung',
     yourRating: 'Dein Eindruck',
@@ -123,9 +131,9 @@ const STRINGS = {
     howWasIt: 'Wie war es?',
     sheWrote: 'hat was geschrieben',
     reviewDeleted: 'Eindruck zurückgenommen',
-    reviewPlaceholder: 'Was du dazu sagen würdest …',
+    reviewPlaceholder: 'Deine Notiz …',
     saveReview: 'Speichern',
-    reviewSaved: 'Danke!',
+    reviewSaved: 'Gespeichert',
     deleteReview: 'Zurücknehmen',
     nooks: 'Nooks',
     noReviews: 'Noch keine Bewertungen.',
@@ -135,24 +143,24 @@ const STRINGS = {
     restarted: 'Auf Anfang gesetzt',
     downloadBusy: 'Ein Download läuft schon.',
     connectionLost: 'Verbindung abgerissen',
-    pickNooksFirst: 'Vergib zuerst Nooks.',
+    pickNooksFirst: 'Erst Nooks antippen.',
     prevChapter: 'Kapitel zurück',
     nextChapter: 'Kapitel vor',
     sortRating: 'Bewertung',
-    backToAwake: 'Zurück zur letzten wachen Stelle,',
+    backToAwake: 'Zurück zu',
     pasteLink: 'Einladungslink einfügen',
     unlock: 'Freischalten',
     unlockFailed: 'Damit konnte ich nichts anfangen.',
     inviteUsed: 'Diese Einladung wurde schon benutzt.',
     inviteExpired: 'Diese Einladung ist abgelaufen.',
     history: 'Verlauf',
-    historyHint: 'Was du zuletzt gehört hast, und wo der Timer dich abgelegt hat.',
+    historyHint: 'Zuletzt gehört, mit der Stelle, an der der Timer ausging.',
     noHistory: 'Noch nichts gehört.',
-    upTo: 'bis',
+    upTo: 'gehört bis',
     rateNow: 'Jetzt bewerten',
     notYet: 'Erst durchhören',
     you: 'Du',
-    stats: 'Deine Zahlen',
+    stats: 'Hörzeit',
     totalListened: 'insgesamt gehört',
     hoursShort: 'Std',
     booksFinished: 'Bücher fertig',
@@ -162,10 +170,10 @@ const STRINGS = {
     nextBadge: 'Als Nächstes:',
     toGo: 'fehlen noch',
     badgeEarned: 'Geschafft!',
-    tellOther: 'Dem anderen zeigen',
+    tellOther: 'Zeigen',
     alreadyShared: 'Schon gezeigt',
     badgeShared: 'Ist unterwegs',
-    reached: 'hat geschafft',
+    reached: 'hat ein Abzeichen geholt:',
     congratulate: 'Gratulieren',
     cheerSent: 'Gratulation verschickt',
     cheersYou: 'gratuliert dir',
@@ -179,11 +187,11 @@ const STRINGS = {
     bookmarkAdded: 'Lesezeichen gesetzt',
     notePlaceholder: 'Notiz …',
     delete: 'Löschen',
-    sleep: 'Sleep',
-    sleepTimer: 'Sleep-Timer',
+    sleep: 'Einschlafen',
+    sleepTimer: 'Einschlaf-Timer',
     off: 'Aus',
     endOfChapter: 'Kapitelende',
-    sleepHint: 'Mr. Nook macht leise aus, wenn du eingeschlafen bist.',
+    sleepHint: 'Mr. Nook blendet aus und stoppt, wenn die Zeit um ist.',
     speed: 'Tempo',
     playback: 'Wiedergabe',
     defaultSpeed: 'Standard-Tempo',
@@ -191,7 +199,7 @@ const STRINGS = {
     skipForward: 'Vorspringen',
     autoResume: 'Zuletzt gehörtes Buch beim Start laden',
     appearance: 'Darstellung',
-    theme: 'Theme',
+    theme: 'Farben',
     light: 'Hell',
     dark: 'Dunkel',
     system: 'System',
@@ -233,7 +241,7 @@ const STRINGS = {
     chapterN: (n) => `Kapitel ${n}`,
     showAllChapters: (n) => `Alle ${n} Kapitel anzeigen`,
     hoursMin: (h, m) => (h > 0 ? `${h} Std ${m} Min` : `${m} Min`),
-    sleepIn: (t) => `Schläft in ${t}`,
+    sleepIn: (t) => `Aus in ${t}`,
   },
   en: {
     whoListens: "Who's listening?",
@@ -249,7 +257,7 @@ const STRINGS = {
     recentlyAdded: 'Recently added',
     recentlyPlayed: 'Recently played',
     favorites: 'Favorites',
-    home: 'Home',
+    home: 'Start',
     library: 'Library',
     search: 'Search',
     settings: 'Settings',
@@ -268,7 +276,7 @@ const STRINGS = {
     nothingInFilter: 'Nothing in this view.',
     pickSomething: 'Pick something from your library.',
     addAudiobook: 'Add audiobook',
-    addHint: 'Audiobooks reach the nook through the script on the Mac. One MP3 per book, cover optional:',
+    addHint: 'New books get added by Yannick on the Mac.',
     searchPlaceholder: 'Title or author',
     play: 'Play',
     resume: 'Continue',
@@ -317,14 +325,22 @@ const STRINGS = {
     securityHint: 'Streams and downloads run over this encrypted connection.',
     sleepHistory: 'Sleep history',
     sleepHistoryHint: 'All times are places in the book, not times of day.',
-    lastAwakeIn: 'Last awake in the book at',
-    thenRan: 'It then ran for',
-    untilPos: 'up to',
+    lastAwakeIn: 'Last awake after',
+    thenRan: 'Ran on for',
+    untilPos: 'more, up to',
     todayAt: 'Today at',
     yesterdayAt: 'Yesterday at',
     show: 'Show',
     nightRemoved: 'Night removed',
     whatWeThought: 'What we said about these',
+    thisBook: 'This book',
+    manage: 'Manage',
+    allBooks: 'All books',
+    viewToggle: 'Switch view',
+    chapterShort: 'Ch.',
+    refreshed: 'Reloaded',
+    speedSticks: 'Applies to every book from now on.',
+    searchIdle: 'Start typing and I will look through the library.',
     awakeAt: 'awake at',
     ranUntil: 'ran until',
     timerStopped: 'timer off at',
@@ -343,7 +359,7 @@ const STRINGS = {
     reviewDeleted: 'Note taken back',
     reviewPlaceholder: 'What did you like?',
     saveReview: 'Save',
-    reviewSaved: 'Thank you!',
+    reviewSaved: 'Saved',
     deleteReview: 'Delete rating',
     nooks: 'Nooks',
     noReviews: 'No ratings yet.',
@@ -366,11 +382,11 @@ const STRINGS = {
     history: 'History',
     historyHint: 'What you listened to lately, and where the timer left you.',
     noHistory: 'Nothing listened to yet.',
-    upTo: 'up to',
+    upTo: 'heard up to',
     rateNow: 'Rate it',
     notYet: 'Finish it first',
     you: 'You',
-    stats: 'Your numbers',
+    stats: 'Listening time',
     totalListened: 'listened in total',
     hoursShort: 'h',
     booksFinished: 'books finished',
@@ -380,10 +396,10 @@ const STRINGS = {
     nextBadge: 'Up next:',
     toGo: 'to go',
     badgeEarned: 'Well done!',
-    tellOther: 'Tell the other one',
+    tellOther: 'Show them',
     alreadyShared: 'Already shared',
     badgeShared: 'On its way',
-    reached: 'reached',
+    reached: 'earned a badge:',
     congratulate: 'Congratulate',
     cheerSent: 'Congratulations sent',
     cheersYou: 'cheers you on',
@@ -397,7 +413,7 @@ const STRINGS = {
     bookmarkAdded: 'Bookmark added',
     notePlaceholder: 'Note …',
     delete: 'Delete',
-    sleep: 'Sleep',
+    sleep: 'Einschlafen',
     sleepTimer: 'Sleep timer',
     off: 'Off',
     endOfChapter: 'End of chapter',
@@ -409,7 +425,7 @@ const STRINGS = {
     skipForward: 'Skip forward',
     autoResume: 'Load last book on start',
     appearance: 'Appearance',
-    theme: 'Theme',
+    theme: 'Farben',
     light: 'Light',
     dark: 'Dark',
     system: 'System',
@@ -451,7 +467,7 @@ const STRINGS = {
     chapterN: (n) => `Chapter ${n}`,
     showAllChapters: (n) => `Show all ${n} chapters`,
     hoursMin: (h, m) => (h > 0 ? `${h} h ${m} min` : `${m} min`),
-    sleepIn: (t) => `Sleeps in ${t}`,
+    sleepIn: (t) => `Off in ${t}`,
   },
 };
 
@@ -674,7 +690,6 @@ const ICON = {
   close: '<svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>',
   plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
   cloud: '<svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 11a3.5 3.5 0 0 0 1 7z"/></svg>',
-  down: '<svg viewBox="0 0 24 24"><path d="m6 10 6 6 6-6"/></svg>',
   downloadIcon: '<svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7.5 11 4.5 4.5 4.5-4.5"/><path d="M5 19h14"/></svg>',
   phone: '<svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>',
   history: '<svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v4h4"/><path d="M12 8v4.5l3 1.8"/></svg>',
@@ -855,6 +870,7 @@ async function route() {
   if (['home', 'library', 'search', 'settings'].includes(screen)) {
     state.screen = screen;
     if (screen === 'home' || screen === 'library') loadLibrary().then(render).catch(() => {});
+    if (screen === 'home' && state.wishes === null) loadWishes();
     if (screen === 'settings') { loadInvites(); loadWishes(); loadSecurity(); }
     render();
     if (screen === 'search') {
@@ -1371,7 +1387,7 @@ function sleepActive() {
 }
 function sleepShort() {
   if (state.sleep.until > 0) return fmtTime((state.sleep.until - Date.now()) / 1000);
-  if (state.sleep.endOfChapter) return '∎';
+  if (state.sleep.endOfChapter) return t('chapterShort');
   return '';
 }
 
@@ -1407,7 +1423,7 @@ setInterval(() => {
   const label = document.getElementById('sleep-label');
   if (label) label.textContent = sleepLabel();
   const mini = document.getElementById('mini-sleep');
-  if (mini) mini.lastElementChild.textContent = sleepShort();
+  if (mini) mini.textContent = sleepShort();
 }, 1000);
 
 // ---- bookmarks
@@ -1913,61 +1929,18 @@ function fmtDay(ts) {
 
 // The span from "still awake" to "timer stopped" is the part you slept through, so it gets
 // its own colour and both ends are labelled.
-// Kept for reference; the history now reads as a sentence instead of a bar.
-// eslint-disable-next-line no-unused-vars
-function sleepSpanHtml(run, durationSec) {
-  const duration = Number(durationSec) || 0;
-  const start = Number(run.started_sec) || 0;
-  const stop = Math.max(start, Number(run.stopped_sec) || 0);
-  const pad = Math.max(120, (stop - start) * 0.25);
-  const from = Math.max(0, start - pad);
-  const to = duration > 0 ? Math.min(duration, stop + pad) : stop + pad;
-  const width = Math.max(1, to - from);
-  const at = (v) => Math.max(0, Math.min(100, ((v - from) / width) * 100));
-  const left = at(start);
-  const right = at(stop);
-
-  return `<div class="span">
-      <div class="span-track">
-        <span class="span-heard" style="width:${left}%"></span>
-        <span class="span-drift" style="left:${left}%;width:${Math.max(2, right - left)}%"></span>
-        <span class="span-dot awake" style="left:${left}%"></span>
-        <span class="span-dot stop" style="left:${right}%"></span>
-      </div>
-      <div class="span-legend">
-        <span class="legend awake">${esc(t('awakeAt'))} ${fmtTime(start)}</span>
-        <span class="span-mid">${esc(fmtDuration(stop - start))} ${esc(t('sleptThrough'))}</span>
-        <span class="legend stop">${esc(t('timerStopped'))} ${fmtTime(stop)}</span>
-      </div>
-    </div>`;
-}
-
-// One line per night, in plain words. "2:00:00" on its own reads like a clock time, so the
-// position is always introduced as a position and the real time of night stands apart.
-function nightLabel(ts) {
-  const then = new Date(ts);
-  const today = new Date();
-  const sameDay = then.toDateString() === today.toDateString();
-  const yesterday = new Date(today.getTime() - 86400000).toDateString() === then.toDateString();
-  const clock = then.toLocaleTimeString(state.lang === 'en' ? 'en-GB' : 'de-DE', { hour: '2-digit', minute: '2-digit' });
-  if (sameDay) return `${t('todayAt')} ${clock}`;
-  if (yesterday) return `${t('yesterdayAt')} ${clock}`;
-  return `${then.toLocaleDateString(state.lang === 'en' ? 'en-GB' : 'de-DE', { day: '2-digit', month: '2-digit' })}, ${clock}`;
-}
-
 function sleepHistoryHtml(book) {
   const runs = book.sleep_sessions || [];
   if (!runs.length) return '';
   return `<section class="section">
       <div class="section-head"><h2>${esc(t('sleepHistory'))}</h2></div>
-      <p class="muted small" style="margin:-4px 0 10px">${esc(t('sleepHistoryHint'))}</p>
       <div class="list">${runs.map((r) => {
         const ran = Math.max(0, Number(r.stopped_sec) - Number(r.started_sec));
         return `<div class="sleep-run">
           <div class="muted small">${esc(nightLabel(r.stopped_at))}${r.kind === 'chapter' ? ` · ${esc(t('endOfChapter'))}` : ''}</div>
           <div style="margin:4px 0 10px">
-            <strong>${esc(t('lastAwakeIn'))} ${fmtTime(r.started_sec)}</strong>
-            <div class="muted small">${esc(t('thenRan'))} ${esc(fmtDuration(ran))} ${esc(t('untilPos'))} ${fmtTime(r.stopped_sec)}</div>
+            <strong>${esc(t('lastAwakeIn'))} ${esc(fmtDuration(r.started_sec))}</strong>
+            <div class="muted small">${esc(t('thenRan'))} ${esc(fmtDuration(ran))} ${esc(t('untilPos'))} ${esc(fmtDuration(r.stopped_sec))}</div>
           </div>
           <div class="row" style="gap:8px">
             <button class="small" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(r.started_sec)}">${esc(t('jumpBack'))}</button>
@@ -2296,6 +2269,22 @@ function tileHtml(book) {
 
 // ---- home
 
+function openWishesHtml() {
+  const open = (state.wishes || []).filter((w) => w.status !== 'done');
+  if (!open.length) return '';
+  return `<section class="section">
+      <div class="section-head"><h2>${esc(t('wishes'))}</h2><span class="muted small">${open.length}</span></div>
+      <div class="list">${open.slice(0, 4).map((w) => `
+        <div class="wish-row">
+          <div style="min-width:0">
+            <div style="font-weight:700">${esc(w.title)}</div>
+            <div class="muted small">${esc([w.author, `${t('wishFrom')} ${w.user_name}`].filter(Boolean).join(' · '))}</div>
+          </div>
+          <button class="small ghost" data-action="wish-status" data-id="${w.id}" data-status="done">${esc(t('markDone'))}</button>
+        </div>`).join('')}</div>
+    </section>`;
+}
+
 function lastSleepHintHtml(book) {
   const run = state.lastSleepRun;
   if (!run || run.book_id !== book.id) return '';
@@ -2304,7 +2293,7 @@ function lastSleepHintHtml(book) {
   const stop = Number(run.stopped_sec) || run.started_sec;
   if (pos < run.started_sec - 60 || pos > stop + 60) return '';
   return `<button class="sleep-hint" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(run.started_sec)}">
-      ${ICON.moon}<span>${esc(t('backToAwake'))} ${fmtTime(run.started_sec)}</span>
+      ${ICON.moon}<span>${esc(t('backToAwake'))} ${esc(fmtDuration(run.started_sec))}</span>
     </button>`;
 }
 
@@ -2318,22 +2307,23 @@ function renderHome() {
 
   let hero;
   if (!books.length) {
-    hero = `<div class="empty card"><img class="hero small" src="/img/nook-pixel.png" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><button class="primary" data-action="sheet-add">${esc(t('addFirst'))}</button></div>`;
+    hero = `<div class="empty card"><img class="hero small" src="/img/nook-pixel.png" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><p class="muted small">${esc(t('addHint'))}</p></div>`;
   } else if (continueBook) {
     const chapterIdx = state.now && state.now.id === continueBook.id ? chapterIndexAt(state.now, currentPos()) : -1;
-    const chapterLine = chapterIdx >= 0 ? chapterTitle(state.now, chapterIdx) : (continueBook.chapter_count ? '' : fmtDuration(Math.max(0, continueBook.duration_sec - continueBook.position_sec)) + ' ' + t('left'));
+    const remaining = fmtDuration(Math.max(0, (continueBook.duration_sec - continueBook.position_sec) / (settings.speed || 1))) + ' ' + t('left');
+    const chapterLine = chapterIdx >= 0 ? `${chapterTitle(state.now, chapterIdx)} · ${remaining}` : remaining;
     hero = `<section class="section" style="margin-top:0">
       <div class="section-head"><h2>${esc(t('continueListening'))}</h2></div>
       <div class="continue" role="button" data-action="open-book" data-id="${esc(continueBook.id)}">
         ${coverHtml(continueBook)}
-        <div>
+        <div style="min-width:0">
           <div class="title">${esc(continueBook.title)}</div>
           <div class="muted small">${esc(continueBook.author || '')}</div>
           <div class="muted small" style="margin-top:4px">${esc(chapterLine)}</div>
           <div class="progress" style="margin-top:8px"><span style="width:${pctOf(continueBook)}%"></span></div>
           ${lastSleepHintHtml(continueBook)}
-          <button class="play" data-action="play-book" data-id="${esc(continueBook.id)}" aria-label="${esc(t('play'))}">${ICON.play}</button>
         </div>
+        <button class="play" data-action="play-book" data-id="${esc(continueBook.id)}" aria-label="${esc(t('play'))}">${ICON.play}</button>
       </div>
     </section>`;
   } else {
@@ -2343,7 +2333,9 @@ function renderHome() {
   const shelf = (title, list) => list.length ? `<section class="section"><div class="section-head"><h2>${esc(title)}</h2></div><div class="shelf">${list.map(tileHtml).join('')}</div></section>` : '';
 
   return `<header class="topbar">
-      <div><div class="muted small">${esc(greeting())}, ${esc(u.name)}</div><img class="logo" src="/img/nook-pixel.png" alt="Mr. Nook"><div class="saying">${esc(saying())}</div></div>
+      <div style="min-width:0">
+        <div class="row" style="gap:8px"><img class="logo" src="/img/nook-pixel.png" alt="Mr. Nook"><div><div class="muted small">${esc(greeting())}, ${esc(u.name)}</div><div class="saying">${esc(saying())}</div></div></div>
+      </div>
       <div class="row" style="gap:6px">
         <button class="icon ghost" data-action="sheet-stats" aria-label="${esc(t('stats'))}">${ICON.star}</button>
         <button class="avatar" data-action="switch-user" aria-label="${esc(t('switchProfile'))}" style="background:${esc(u.color)}">${u.has_avatar ? `<img src="/media/avatar/${u.id}?v=${state.avatarVersion}" alt="">` : esc(initials(u.name))}</button>
@@ -2353,6 +2345,7 @@ function renderHome() {
     ${shelf(t('recentlyAdded'), recentlyAdded)}
     ${shelf(t('recentlyPlayed'), recentlyPlayed)}
     ${shelf(t('favorites'), favorites)}
+    ${openWishesHtml()}
     <section class="section">
       <div class="wish-card">
         <img src="/img/nook-pixel.png" alt="" class="wish-mascot">
@@ -2407,7 +2400,7 @@ function renderLibrary() {
   const filters = [['all', t('all')], ['progress', t('inProgress')], ['finished', t('finished')], ['favorites', t('favorites')]];
   let body;
   if (!state.books.length) {
-    body = `<div class="empty"><img class="hero small" src="/img/nook-pixel.png" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><button class="primary" data-action="sheet-add">${esc(t('addFirst'))}</button></div>`;
+    body = `<div class="empty"><img class="hero small" src="/img/nook-pixel.png" alt=""><p><strong>${esc(t('emptyNook'))}</strong></p><p class="muted small">${esc(t('addHint'))}</p></div>`;
   } else if (!list.length) {
     body = `<div class="empty"><p class="muted">${esc(t('nothingInFilter'))}</p></div>`;
   } else if (settings.libView === 'list') {
@@ -2418,9 +2411,7 @@ function renderLibrary() {
   return `<header class="topbar">
       <h1>${esc(t('library'))}</h1>
       <div class="row" style="gap:6px">
-        <button class="icon ghost" data-action="all-bookmarks" aria-label="${esc(t('bookmarks'))}">${ICON.bookmark}</button>
-        <button class="icon ghost" data-action="sheet-add" aria-label="${esc(t('addAudiobook'))}">${ICON.plus}</button>
-        <button class="icon ghost" data-action="toggle-view" aria-label="view">${settings.libView === 'grid' ? ICON.list : ICON.grid}</button>
+        <button class="icon ghost" data-action="toggle-view" aria-label="${esc(t('viewToggle'))}">${settings.libView === 'grid' ? ICON.list : ICON.grid}</button>
         <button class="icon ghost" data-action="sheet-sort" aria-label="${esc(t('sortBy'))}">${ICON.sort}</button>
       </div>
     </header>
@@ -2471,22 +2462,26 @@ function renderBook() {
     ? `<button class="ghost" style="width:100%;margin-top:8px" data-action="sheet-chapters" data-id="${esc(b.id)}">${esc(t('showAllChapters', total))}</button>`
     : '';
 
-  const bookmarks = b.bookmarks.length ? `<section class="section"><div class="section-head"><h2>${esc(t('bookmarks'))}</h2><span class="muted small">${b.bookmarks.length}</span></div><div class="list">${b.bookmarks.map((bm) => bookmarkHtml(b, bm)).join('')}</div></section>` : '';
+  // Always shown, so the way to all bookmarks is not hidden behind having one here.
+  const bookmarks = `<section class="section">
+      <div class="section-head">
+        <h2>${esc(t('bookmarks'))}${b.bookmarks.length ? ` <span class="muted small">${b.bookmarks.length}</span>` : ''}</h2>
+        <button class="link small" data-action="sheet-bookmarks" data-id="${esc(b.id)}">${esc(b.bookmarks.length ? t('manage') : t('addBookmarkHere'))}</button>
+      </div>
+      ${b.bookmarks.length ? `<div class="list">${b.bookmarks.map((bm) => bookmarkHtml(b, bm)).join('')}</div>` : ''}
+    </section>`;
 
   return `<header class="topbar">
       <button class="icon ghost" data-action="back" aria-label="${esc(t('back'))}">${ICON.back}</button>
-      <button class="icon ghost ${progress.favorite ? 'on' : ''}" data-action="fav" data-id="${esc(b.id)}" aria-label="${esc(t('favorite'))}" style="${progress.favorite ? 'color:var(--terracotta)' : ''}">${progress.favorite ? ICON.heart.replace('<svg', '<svg style="fill:currentColor"') : ICON.heart}</button>
     </header>
     <div class="detail">
       ${coverHtml(b, 'cover-large')}
       <div class="center">
         <h1 style="font-size:22px">${esc(b.title)}</h1>
         <div class="muted">${esc(b.author || '')}</div>
-        <div class="muted small" id="detail-pct" style="margin-top:6px">${pct} % · ${esc(fmtDuration(Math.max(0, duration - pos)))} ${esc(t('left'))}${progress.finished ? ` · ${esc(t('finished'))}` : ''}</div>
+        <div class="muted small" id="detail-pct" style="margin-top:6px">${pct} % · ${esc(fmtDuration(Math.max(0, (duration - pos) / (settings.speed || 1))))} ${esc(t('left'))}${progress.finished ? ` · ${esc(t('finished'))}` : ''}</div>
       </div>
       <div class="progress"><span id="detail-bar" style="width:${pct}%"></span></div>
-      ${ratingRowHtml(b)}
-      ${downloadRowHtml(b)}
       <button class="primary big-play" data-action="play-book" data-id="${esc(b.id)}" data-big-play="${esc(b.id)}">${playing ? ICON.pause : ICON.play}<span>${esc(label)}</span></button>
       <div class="actions">
         <button class="${progress.favorite ? 'on' : ''}" data-action="fav" data-id="${esc(b.id)}">${ICON.heart}${esc(t('favorite'))}</button>
@@ -2499,6 +2494,10 @@ function renderBook() {
         <div class="section-head"><h2>${esc(t('chapters'))}</h2><span class="muted small">${total || 1}</span></div>
         <div class="tracklist">${chapters}</div>
         ${moreChapters}
+      </section>
+      <section class="section">
+        ${ratingRowHtml(b)}
+        <div style="margin-top:10px">${downloadRowHtml(b)}</div>
       </section>
     </div>`;
 }
@@ -2529,7 +2528,12 @@ function runSearch(query) {
 }
 function renderSearch() {
   let body = '';
-  if (state.results === null) body = '';
+  if (state.results === null) {
+    const recent = state.books.filter((b) => b.position_sec > 0).slice(0, 6);
+    body = recent.length
+      ? `<div class="section-head" style="margin-top:8px"><h2>${esc(t('recentlyPlayed'))}</h2></div><div class="list">${recent.map(listItemHtml).join('')}</div>`
+      : `<div class="empty"><img class="hero small" src="/img/nook-pixel.png" alt=""><p class="muted">${esc(t('searchIdle'))}</p></div>`;
+  }
   else if (!state.results.length) body = `<div class="empty"><img class="hero small" src="/img/nook-pixel.png" alt=""><p class="muted">${esc(t('nothingHere'))}</p></div>`;
   else body = `<div class="list">${state.results.map(listItemHtml).join('')}</div>`;
   return `<header class="topbar"><h1>${esc(t('search'))}</h1></header>
@@ -2653,7 +2657,7 @@ function securityRowHtml() {
         </div>
       </div>
     </div>
-    <div class="setting"><div class="hint">${esc(t('securityHint'))} ${esc(t('atRest'))}</div></div>`;
+    <div class="setting"><div class="hint">${esc(t('securityHint'))}</div></div>`;
 }
 
 function renderSettings() {
@@ -2683,10 +2687,6 @@ function renderSettings() {
       <div class="setting"><div><div class="label">${esc(t('wishBook'))}</div><div class="hint">${esc(t('wishHint'))}</div></div><button class="link" data-action="sheet-wish">${esc(t('wishBook'))}</button></div>
       ${wishRowsHtml()}
     </div>
-    <h3 class="muted" style="margin-top:22px">${esc(t('security'))}</h3>
-    <div class="settings-group">
-      ${securityRowHtml()}
-    </div>
     <h3 class="muted" style="margin-top:22px">${esc(t('invites'))}</h3>
     <div class="settings-group">
       <div class="setting"><div><div class="label">${esc(t('newInvite'))}</div><div class="hint">${esc(t('inviteHint'))}</div></div><button class="link" data-action="new-invite">${esc(t('newInvite'))}</button></div>
@@ -2694,14 +2694,14 @@ function renderSettings() {
     </div>
     <h3 class="muted" style="margin-top:22px">${esc(t('libraryHeading'))}</h3>
     <div class="settings-group">
-      <div class="setting"><span class="label">${esc(t('addAudiobook'))}</span><button class="link" data-action="sheet-add">${esc(t('addAudiobook'))}</button></div>
+      <div class="setting"><div><div class="label">${esc(t('addAudiobook'))}</div><div class="hint">${esc(t('addHint'))}</div></div></div>
       <div class="setting"><div><div class="label">${esc(t('history'))}</div><div class="hint">${esc(t('historyHint'))}</div></div><button class="link" data-action="sheet-history">${esc(t('show'))}</button></div>
       <div class="setting"><span class="label">${esc(t('refreshLibrary'))}</span><button class="link" data-action="refresh">${esc(t('refreshLibrary'))}</button></div>
-      <div class="setting"><span class="label">${esc(t('clearCache'))}</span><button class="link" data-action="clear-cache">${esc(t('clearCache'))}</button></div>
     </div>
     <h3 class="muted" style="margin-top:22px">${esc(t('about'))}</h3>
     <div class="settings-group">
       <div class="setting"><div class="row"><img src="/icons/icon-192.png" width="40" height="40" style="border-radius:10px" alt=""><div><div class="label">Mr. Nook</div><div class="hint">${esc(t('version'))} ${APP_VERSION}</div></div></div></div>
+      ${securityRowHtml()}
       <div class="setting"><span class="label">${esc(t('sourceCode'))}</span><a href="${GITHUB_URL}" target="_blank" rel="noopener">GitHub</a></div>
       <div class="setting"><div><div class="label">${esc(t('licenses'))}</div><div class="hint">${esc(t('licensesText'))}</div></div></div>
     </div>`;
@@ -2722,7 +2722,7 @@ function renderMini() {
     <span class="bar" id="mini-bar"></span>
     ${coverHtml(b)}
     <div class="text"><div style="font-weight:700">${esc(b.title)}</div><div class="muted small" id="mini-sub">${esc(idx >= 0 ? chapterTitle(b, idx) : b.author || '')}</div></div>
-    ${sleepActive() ? `<span class="mini-sleep" id="mini-sleep">${ICON.moon}<span>${esc(sleepShort())}</span></span>` : ''}
+    <button class="mini-sleep ${sleepActive() ? 'on' : ''}" data-action="sheet-sleep" aria-label="${esc(t('sleepTimer'))}">${ICON.moon}<span id="mini-sleep">${esc(sleepShort())}</span></button>
     <button class="icon" data-action="toggle-play" data-play-button aria-label="${esc(t('play'))}">${ICON.play}</button>
   </div>`;
 }
@@ -2749,7 +2749,7 @@ function renderPlayer() {
         <div class="times small muted">
           <span id="time-elapsed">${fmtTime(currentPos())}</span>
           <span id="time-percent"></span>
-          <button data-action="toggle-total" id="time-remaining"></button>
+          <button class="time-toggle" data-action="toggle-total" id="time-remaining"></button>
         </div>
       </div>
       <div class="controls">
@@ -2784,100 +2784,25 @@ function renderSheet() {
       <div class="tracklist">${book.chapters.map((c, i) => trackHtml(book, i, idx, isNow, playing).replace('data-action="play-chapter"', 'data-action="play-chapter" data-close="1"')).join('')}</div>`;
   } else if (s.type === 'bookmarks') {
     const book = [state.now, state.detail].find((b) => b && b.id === s.bookId) || state.now;
-    if (!book) return '';
-    body = `<h3>${esc(t('bookmarks'))} <span class="muted small">${book.bookmarks.length}</span></h3>
-      <button class="primary" style="width:100%;margin-bottom:12px" data-action="add-bookmark">${esc(t('addBookmarkHere'))}</button>
-      ${book.bookmarks.length
-        ? `<div class="list">${book.bookmarks.map((bm) => bookmarkHtml(book, bm)).join('')}</div>`
-        : `<p class="muted small center">${esc(t('noBookmarks'))}</p>`}`;
-  } else if (s.type === 'all-bookmarks') {
-    const rows = state.allBookmarks;
+    const all = s.scope === 'all';
+    const rows = all ? state.allBookmarks : (book ? book.bookmarks : []);
     body = `<h3>${esc(t('bookmarks'))} ${rows ? `<span class="muted small">${rows.length}</span>` : ''}</h3>
-      ${rows === null ? '<p class="muted small">…</p>'
+      ${book ? `<div class="chips" style="margin:10px 0 12px">
+        <button data-action="bookmark-scope" data-scope="book" class="${all ? '' : 'active'}">${esc(t('thisBook'))}</button>
+        <button data-action="bookmark-scope" data-scope="all" class="${all ? 'active' : ''}">${esc(t('allBooks'))}</button>
+      </div>` : ''}
+      ${!all && book ? `<button class="primary" style="width:100%;margin-bottom:12px" data-action="add-bookmark">${esc(t('addBookmarkHere'))}</button>` : ''}
+      ${rows === null || rows === undefined ? '<p class="muted small">…</p>'
         : rows.length
-          ? `<div class="list">${rows.map((bm) => `
+          ? `<div class="list">${rows.map((bm) => (all ? `
               <div class="bookmark">
                 <button class="jump" data-action="open-bookmark" data-id="${esc(bm.book_id)}" data-sec="${Number(bm.position_sec)}">
                   ${fmtTime(bm.position_sec)}<small>${esc(bm.book_title)}</small>
                 </button>
                 <span class="small">${esc(bm.note || '')}</span>
                 <button class="del" data-action="delete-bookmark" data-id="${bm.id}" aria-label="${esc(t('delete'))}">${ICON.close}</button>
-              </div>`).join('')}</div>`
+              </div>` : bookmarkHtml(book, bm))).join('')}</div>`
           : `<p class="muted small center">${esc(t('noBookmarks'))}</p>`}`;
-  } else if (s.type === 'rating') {
-    const book = [state.detail, state.now].find((b) => b && b.id === s.bookId) || state.detail;
-    if (!book) return '';
-    body = `<h3 class="center">${esc(book.title)}</h3>${reviewSectionHtml(book).replace('<section class="section">', '<div>').replace('</section>', '</div>')}`;
-  } else if (s.type === 'stats') {
-    body = statsSheetHtml();
-  } else if (s.type === 'badge') {
-    const a = s.achievement;
-    body = `<div class="center">
-        <img class="badge-hero" src="/img/nook-pixel.png" alt="">
-        <h3>${esc(t('badgeEarned'))}</h3>
-        <div class="badge-name">${esc(badgeName(a.code))}</div>
-        <p class="muted small">${esc(badgeLine(a.code))}</p>
-        <div class="chips" style="justify-content:center;margin-top:14px">
-          ${a.shared_at ? `<span class="badge">${esc(t('alreadyShared'))}</span>` : `<button class="primary" data-action="share-badge" data-id="${a.id}">${esc(t('tellOther'))}</button>`}
-          <button data-action="close-sheet">${esc(t('close'))}</button>
-        </div>
-      </div>`;
-  } else if (s.type === 'cheer-ask') {
-    const a = s.achievement;
-    body = `<div class="center">
-        <img class="badge-hero" src="/img/nook-pixel.png" alt="">
-        <h3>${esc(a.user_name)} ${esc(t('reached'))}</h3>
-        <div class="badge-name">${esc(badgeName(a.code))}</div>
-        <p class="muted small">${esc(badgeLine(a.code))}</p>
-        <div class="chips" style="justify-content:center;margin-top:14px">
-          <button class="primary" data-action="cheer-badge" data-id="${a.id}">${esc(t('congratulate'))}</button>
-          <button data-action="close-sheet">${esc(t('later'))}</button>
-        </div>
-      </div>`;
-  } else if (s.type === 'cheer-got') {
-    const a = s.achievement;
-    body = `<div class="center">
-        <img class="badge-hero" src="/img/nook-pixel.png" alt="">
-        <h3>${esc(a.cheer_name)} ${esc(t('cheersYou'))}</h3>
-        <div class="badge-name">${esc(badgeName(a.code))}</div>
-        <div class="chips" style="justify-content:center;margin-top:14px">
-          <button class="primary" data-action="close-sheet">${esc(t('nice'))}</button>
-        </div>
-      </div>`;
-  } else if (s.type === 'history') {
-    const rows = state.history;
-    const naps = state.sleepLog || [];
-    const fmtWhen = (ts) => new Date(ts).toLocaleString(state.lang === 'en' ? 'en-GB' : 'de-DE',
-      { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    const napFor = (bookId, at) => naps.find((n) => n.book_id === bookId && Math.abs(n.stopped_at - at) < 3 * 3600000);
-    body = `<h3>${esc(t('history'))}</h3>
-      <p class="muted small" style="margin:-4px 0 12px">${esc(t('historyHint'))}</p>
-      ${rows === null ? '<p class="muted small">…</p>'
-        : rows.length
-          ? `<div class="list">${rows.map((row) => {
-              const nap = napFor(row.book_id, row.updated_at);
-              return `<div class="history-row">
-                ${coverHtml(row, 'hist-cover')}
-                <div style="min-width:0">
-                  <div style="font-weight:700">${esc(row.title)}</div>
-                  <div class="muted small">${esc(nightLabel(row.updated_at))} · ${esc(t('upTo'))} ${fmtTime(row.position_sec)}${row.finished ? ` · ${esc(t('finished'))}` : ''}</div>
-                  ${nap ? `<div class="muted small">${esc(t('lastAwakeIn'))} ${fmtTime(nap.started_sec)}</div>` : ''}
-                </div>
-                <div class="row" style="gap:6px;flex:none">
-                  ${nap ? `<button class="small" data-action="open-bookmark" data-id="${esc(row.book_id)}" data-sec="${Number(nap.started_sec)}">${esc(t('jumpBack'))}</button>` : ''}
-                  <button class="small ${nap ? 'ghost' : ''}" data-action="open-bookmark" data-id="${esc(row.book_id)}" data-sec="${Number(row.position_sec)}">${esc(t('resume'))}</button>
-                </div>
-
-              </div>`;
-            }).join('')}</div>`
-          : `<p class="muted small center">${esc(t('noHistory'))}</p>`}`;
-  } else if (s.type === 'invite') {
-    body = `<h3 class="center">${esc(t('newInvite'))}</h3>
-      <p class="muted small center" style="margin-top:0">${esc(t('inviteHint'))}</p>
-      <div class="form">
-        <label><span>${esc(t('inviteFor'))}</span><input id="invite-label" maxlength="60" autocomplete="off" placeholder="Katie"></label>
-        <button class="primary" data-action="create-invite">${esc(t('newInvite'))}</button>
-      </div>`;
   } else if (s.type === 'wish') {
     body = `<h3 class="center">${esc(t('wishBook'))}</h3>
       <p class="muted small center" style="margin-top:0">${esc(t('wishHint'))}</p>
@@ -2897,15 +2822,14 @@ function renderSheet() {
         ${hasRealChapters(state.now) ? `<button data-action="sleep" data-min="-1" class="${state.sleep.endOfChapter ? 'active' : ''}">${esc(t('endOfChapter'))}</button>` : ''}
       </div>`;
   } else if (s.type === 'speed') {
-    body = `<h3 class="center">${esc(t('speed'))}</h3><div class="speed-value">${settings.speed}×</div>
+    body = `<h3 class="center">${esc(t('speed'))}</h3>
+      <p class="muted small center" style="margin-top:0">${esc(t('speedSticks'))}</p>
+      <div class="speed-value">${settings.speed}×</div>
       <input type="range" id="speed-slider" min="0.5" max="3" step="0.05" value="${settings.speed}" style="--pct:${((settings.speed - 0.5) / 2.5) * 100}%">
       <div class="chips" style="justify-content:center;margin-top:12px">${SPEEDS.map((v) => `<button data-action="speed" data-value="${v}" class="${settings.speed === v ? 'active' : ''}">${v}×</button>`).join('')}</div>`;
   } else if (s.type === 'sort') {
     const options = [['lastPlayed', t('sortLastPlayed')], ['added', t('sortAdded')], ['title', t('sortTitle')], ['author', t('sortAuthor')], ['progress', t('sortProgress')], ['rating', t('sortRating')]];
     body = `<h3>${esc(t('sortBy'))}</h3>${options.map(([k, label]) => `<button class="option ${settings.libSort === k ? 'active' : ''}" data-action="sort" data-value="${k}"><span>${esc(label)}</span>${settings.libSort === k ? ICON.check : ''}</button>`).join('')}`;
-  } else if (s.type === 'add') {
-    body = `<h3>${esc(t('addAudiobook'))}</h3><p class="muted small" style="margin-top:0">${esc(t('addHint'))}</p>
-      <code>cd ~/mr-nook\nnode scripts/books.mjs add "/path/book.mp3" --cover "/path/cover.jpg"</code>`;
   } else if (s.type === 'avatar') {
     const user = state.users.find((u) => u.id === s.userId);
     if (!user) return '';
@@ -2979,7 +2903,7 @@ function updateTimeUi() {
   const remaining = document.getElementById('time-remaining');
   if (remaining) remaining.textContent = state.showTotal ? `${fmtTime(duration)} ${t('total')}` : `-${fmtTime(Math.max(0, (duration - pos) / (audio.playbackRate || 1)))} ${t('left')}`;
   const percent = document.getElementById('time-percent');
-  if (percent) percent.textContent = `${fmtNumber(pct, 1)} %`;
+  if (percent) percent.textContent = `${fmtNumber(Math.round(pct))} %`;
   const idx = chapterIndexAt(state.now, pos);
   const chapterNow = document.getElementById('chapter-now');
   if (chapterNow) chapterNow.textContent = idx >= 0 ? chapterTitle(state.now, idx) : '';
@@ -2988,7 +2912,7 @@ function updateTimeUi() {
   if (detailPct && state.detail && state.now && state.detail.id === state.now.id) {
     const dur = Number(state.detail.duration_sec) || 0;
     const fin = state.detail.progress && state.detail.progress.finished;
-    detailPct.textContent = `${fin ? 100 : dur > 0 ? Math.round((pos / dur) * 100) : 0} % · ${fmtDuration(Math.max(0, dur - pos))} ${t('left')}${fin ? ` · ${t('finished')}` : ''}`;
+    detailPct.textContent = `${fin ? 100 : dur > 0 ? Math.round((pos / dur) * 100) : 0} % · ${fmtDuration(Math.max(0, (dur - pos) / (audio.playbackRate || 1)))} ${t('left')}${fin ? ` · ${t('finished')}` : ''}`;
     const bar = document.getElementById('detail-bar');
     if (bar) bar.style.width = `${dur > 0 ? Math.min(100, (pos / dur) * 100) : 0}%`;
   }
@@ -3070,10 +2994,9 @@ app.addEventListener('click', (event) => {
     case 'extend-sleep': extendSleep(Number(target.dataset.min)); break;
     case 'toggle-total': state.showTotal = !state.showTotal; updateTimeUi(); break;
     case 'sheet-chapters': openSheet({ type: 'chapters', bookId: id || (state.now && state.now.id) }); break;
-    case 'sheet-sleep': openSheet({ type: 'sleep' }); break;
+    case 'sheet-sleep': event.stopPropagation(); openSheet({ type: 'sleep' }); break;
     case 'sheet-speed': openSheet({ type: 'speed' }); break;
     case 'sheet-sort': openSheet({ type: 'sort' }); break;
-    case 'sheet-add': openSheet({ type: 'add' }); break;
     case 'sheet-bookmarks': openSheet({ type: 'bookmarks', bookId: id || (state.now && state.now.id) }); break;
     case 'sheet-wish': openSheet({ type: 'wish' }); break;
     case 'sheet-stats':
@@ -3101,11 +3024,15 @@ app.addEventListener('click', (event) => {
         .catch(() => { state.history = []; render(); });
       break;
     case 'sheet-rating': openSheet({ type: 'rating', bookId: id }); break;
-    case 'all-bookmarks':
-      state.allBookmarks = null;
-      openSheet({ type: 'all-bookmarks' });
-      api(`/bookmarks?user=${state.user.id}`).then((rows) => { state.allBookmarks = rows; render(); }).catch(() => { state.allBookmarks = []; render(); });
+    case 'bookmark-scope': {
+      const scope = target.dataset.scope;
+      state.sheet = { ...state.sheet, scope };
+      if (scope === 'all' && state.allBookmarks === null) {
+        api(`/bookmarks?user=${state.user.id}`).then((rows) => { state.allBookmarks = rows; render(); }).catch(() => { state.allBookmarks = []; render(); });
+      }
+      render();
       break;
+    }
     case 'open-book-sheet': closeSheet(); setTimeout(() => go('book', id), 0); break;
     case 'open-bookmark':
       closeSheet();
@@ -3148,7 +3075,11 @@ app.addEventListener('click', (event) => {
     case 'create-invite': createInvite(); break;
     case 'copy-invite': copyInvite(target.dataset.token); break;
     case 'revoke-invite': revokeInvite(target.dataset.token); break;
-    case 'refresh': loadLibrary().then(() => { render(); toast('✓'); }).catch((err) => toast(`${t('error')}: ${err.message}`)); break;
+    case 'refresh':
+      // Also drops the shell cache, which is what "clear cache" used to do separately.
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage('clear-cache');
+      loadLibrary().then(() => { render(); toast(t('refreshed')); }).catch((err) => toast(`${t('error')}: ${err.message}`));
+      break;
     case 'clear-cache':
       if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage('clear-cache');
       // Downloaded books are the listener's data, not cache.
