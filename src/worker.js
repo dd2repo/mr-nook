@@ -368,7 +368,9 @@ async function getBook(env, url, bookId) {
     env.DB.prepare('SELECT id, position_sec, note, created_at FROM bookmarks WHERE book_id = ? AND user_id = ? ORDER BY position_sec').bind(bookId, userId),
     env.DB.prepare('SELECT position_sec, finished, favorite, updated_at FROM progress WHERE book_id = ? AND user_id = ?').bind(bookId, userId),
     env.DB.prepare(
-      'SELECT id, started_sec, stopped_sec, kind, stopped_at FROM sleep_sessions WHERE user_id = ? AND book_id = ? ORDER BY stopped_at DESC LIMIT 5',
+      `SELECT id, started_sec, stopped_sec, kind, started_at, stopped_at,
+              awake_sec, awake_at, hidden_sec, hidden_at
+         FROM sleep_sessions WHERE user_id = ? AND book_id = ? ORDER BY stopped_at DESC LIMIT 8`,
     ).bind(userId, bookId),
     env.DB.prepare(
       `SELECT r.user_id, r.rating, r.text, r.updated_at, u.name AS user_name
@@ -564,15 +566,22 @@ async function createSleepSession(env, body) {
   const stopped = requireNumber(body.stopped_sec, 'stopped_sec');
   const kind = body.kind === 'chapter' ? 'chapter' : 'timer';
   const now = Date.now();
+  const optional = (v) => (v === null || v === undefined || v === '' ? null : Number(v));
   const row = await env.DB.prepare(
-    `INSERT INTO sleep_sessions (user_id, book_id, started_sec, stopped_sec, kind, started_at, stopped_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
-     RETURNING id, book_id, started_sec, stopped_sec, kind, started_at, stopped_at`,
-  ).bind(userId, bookId, started, stopped, kind, Number(body.started_at) || now, now).first();
+    `INSERT INTO sleep_sessions
+       (user_id, book_id, started_sec, stopped_sec, kind, started_at, stopped_at,
+        awake_sec, awake_at, hidden_sec, hidden_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     RETURNING id, book_id, started_sec, stopped_sec, kind, started_at, stopped_at,
+               awake_sec, awake_at, hidden_sec, hidden_at`,
+  ).bind(
+    userId, bookId, started, stopped, kind, Number(body.started_at) || now, now,
+    optional(body.awake_sec), optional(body.awake_at), optional(body.hidden_sec), optional(body.hidden_at),
+  ).first();
   // Keep the list short; only the recent nights are useful.
   await env.DB.prepare(
     `DELETE FROM sleep_sessions WHERE user_id = ?1 AND book_id = ?2 AND id NOT IN
-       (SELECT id FROM sleep_sessions WHERE user_id = ?1 AND book_id = ?2 ORDER BY stopped_at DESC LIMIT 20)`,
+       (SELECT id FROM sleep_sessions WHERE user_id = ?1 AND book_id = ?2 ORDER BY stopped_at DESC LIMIT 8)`,
   ).bind(userId, bookId).run();
   return json(row, 201);
 }
@@ -582,13 +591,15 @@ async function listSleepSessions(env, url) {
   const rawBook = url.searchParams.get('book');
   if (rawBook) {
     const { results } = await env.DB.prepare(
-      `SELECT id, started_sec, stopped_sec, kind, started_at, stopped_at
+      `SELECT id, started_sec, stopped_sec, kind, started_at, stopped_at,
+            awake_sec, awake_at, hidden_sec, hidden_at
          FROM sleep_sessions WHERE user_id = ? AND book_id = ? ORDER BY stopped_at DESC LIMIT 20`,
     ).bind(userId, requireBookId(rawBook)).all();
     return json(results);
   }
   const { results } = await env.DB.prepare(
     `SELECT s.id, s.book_id, s.started_sec, s.stopped_sec, s.kind, s.started_at, s.stopped_at,
+            s.awake_sec, s.awake_at, s.hidden_sec, s.hidden_at,
             b.title AS book_title, (b.cover_key IS NOT NULL) AS has_cover
        FROM sleep_sessions s JOIN books b ON b.id = s.book_id
       WHERE s.user_id = ? ORDER BY s.stopped_at DESC LIMIT 40`,

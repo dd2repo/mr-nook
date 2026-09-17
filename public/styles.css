@@ -604,3 +604,14 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 
 /* the remaining-time readout is a toggle, so it should look like one */
 .time-toggle { border-bottom: 1px dashed var(--line); border-radius: 0; }
+
+/* ---------- a night, readable at a glance */
+.sleep-place { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.sleep-place strong { font-size: 16px; line-height: 1.3; }
+.icon-small {
+  width: 32px; height: 32px; padding: 0; border-radius: 50%; background: transparent;
+  color: var(--muted); display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.icon-small svg { width: 16px; height: 16px; }
+.icon-small:active { color: var(--terracotta); }
+.sleep-run button.primary.small { background: var(--sage); color: var(--sage-ink); }

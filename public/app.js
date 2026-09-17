@@ -99,7 +99,11 @@ const STRINGS = {
     securityHint: 'Streams und Downloads laufen über diese verschlüsselte Verbindung.',
     sleepHistory: 'Einschlaf-Verlauf',
     sleepHistoryHint: 'Alle Zeiten sind Stellen im Buch, keine Uhrzeiten.',
-    lastAwakeIn: 'Zuletzt wach nach',
+    lastAwakeIn: 'Zuletzt wach bei',
+    lastTouched: 'Zuletzt angefasst',
+    screenWentDark: 'Handy dunkel',
+    timerSetAt: 'Timer gestellt',
+    thenSlept: 'Danach verschlafen:',
     thenRan: 'Lief noch',
     untilPos: 'weiter, bis',
     todayAt: 'Heute um',
@@ -325,7 +329,11 @@ const STRINGS = {
     securityHint: 'Streams and downloads run over this encrypted connection.',
     sleepHistory: 'Sleep history',
     sleepHistoryHint: 'All times are places in the book, not times of day.',
-    lastAwakeIn: 'Last awake after',
+    lastAwakeIn: 'Last awake at',
+    lastTouched: 'Last touched',
+    screenWentDark: 'Screen went dark',
+    timerSetAt: 'Timer set',
+    thenSlept: 'Slept through:',
     thenRan: 'Ran on for',
     untilPos: 'more, up to',
     todayAt: 'Today at',
@@ -546,9 +554,9 @@ function fmtTime(seconds) {
   return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
 }
 function fmtDuration(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.round((seconds % 3600) / 60);
-  return t('hoursMin', h, m);
+  // Round to whole minutes first, then carry, or 3599 s prints as "60 Min".
+  const total = Math.round((Number(seconds) || 0) / 60);
+  return t('hoursMin', Math.floor(total / 60), total % 60);
 }
 function initials(text) {
   return String(text || '?').split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase();
@@ -1157,6 +1165,8 @@ function saveProgress(force, useBeacon) {
   const finished = audio.ended || (duration > 0 && duration - position < 5) ? 1 : 0;
   applyLocalProgress(state.now.id, { position_sec: position, finished, last_played: now });
   saveProgressFor(state.now.id, position, finished, { useBeacon });
+  // Keeps restoreSleep able to reconstruct a night the app did not survive.
+  if (state.sleepRun) persistSleep();
 }
 
 function applyLocalProgress(bookId, patch) {
@@ -1257,6 +1267,8 @@ function restoreSleep() {
         stopped_sec: saved.lastSec,
         kind: saved.run.kind,
         started_at: saved.run.startedAt,
+        awake_sec: saved.run.awakeSec ?? null, awake_at: saved.run.awakeAt ?? null,
+        hidden_sec: saved.run.hiddenSec ?? null, hidden_at: saved.run.hiddenAt ?? null,
       });
     }
     return;
@@ -1365,22 +1377,62 @@ function recordSleepRun() {
   const stopped = currentPos();
   if (stopped - run.startedSec < 30) return;   // too short to be worth remembering
 
+  // The best guess at "the last thing I took in", newest evidence first.
+  const lastSign = Math.max(run.startedSec, run.awakeSec || 0, run.hiddenSec || 0);
+
   // Remembered first, sent second, so nothing depends on the network.
-  state.lastSleepRun = { book_id: run.bookId, started_sec: run.startedSec, stopped_sec: stopped, stopped_at: Date.now() };
+  state.lastSleepRun = {
+    book_id: run.bookId, started_sec: run.startedSec, awake_sec: lastSign,
+    stopped_sec: stopped, stopped_at: Date.now(),
+  };
   try { localStorage.setItem(lastSleepKey(), JSON.stringify(state.lastSleepRun)); } catch { /* ignore */ }
   queueSleepRun({
     user_id: state.user.id, book_id: run.bookId,
     started_sec: run.startedSec, stopped_sec: stopped, kind: run.kind, started_at: run.startedAt,
+    awake_sec: run.awakeSec ?? null, awake_at: run.awakeAt ?? null,
+    hidden_sec: run.hiddenSec ?? null, hidden_at: run.hiddenAt ?? null,
   });
+
+  // The morning's big button should resume where you still were, not where the timer
+  // carried you. Two re-heard minutes cost nothing; a skipped hour loses the thread.
+  const resumeAt = Math.max(0, lastSign - 120);
+  if (stopped - resumeAt > 120) {
+    // The pause handler writes the stop position first, so this has to land after it.
+    setTimeout(() => {
+      applyLocalProgress(run.bookId, { position_sec: Math.floor(resumeAt), finished: 0 });
+      saveProgressFor(run.bookId, Math.floor(resumeAt), 0, { touch: false });
+      render();
+    }, 0);
+  }
   render();
 }
-// Anything you deliberately do proves you were awake at that spot.
+// "When I set the timer" is a guess. "The last time this phone was touched" is evidence.
+// startedSec stays the timer moment; awakeSec is the last sign of life.
+let lastAwakeWrite = 0;
+
 function markAwake() {
   if (!state.sleepRun || !state.now || state.sleepRun.bookId !== state.now.id) return;
-  state.sleepRun.startedSec = currentPos();
-  state.sleepRun.startedAt = Date.now();
+  const now = Date.now();
+  if (now - lastAwakeWrite < 5000) return;
+  lastAwakeWrite = now;
+  state.sleepRun.awakeSec = currentPos();
+  state.sleepRun.awakeAt = now;
   persistSleep();
 }
+
+// Locking the phone is the closest thing to "they put it down".
+function markScreenOff() {
+  if (!state.sleepRun || !state.now || state.sleepRun.bookId !== state.now.id) return;
+  if (audio.paused) return;
+  state.sleepRun.hiddenSec = currentPos();
+  state.sleepRun.hiddenAt = Date.now();
+  persistSleep();
+}
+
+// Passive so it never costs a scroll frame, and only while a timer is actually armed.
+['pointerdown', 'touchstart', 'keydown'].forEach((type) => {
+  document.addEventListener(type, () => { if (state.sleepRun) markAwake(); }, { passive: true, capture: true });
+});
 
 function sleepActive() {
   return state.sleep.until > 0 || state.sleep.endOfChapter;
@@ -1501,13 +1553,13 @@ function updateMediaSession() {
     });
   } catch { /* older browsers */ }
   const set = (action, handler) => { try { navigator.mediaSession.setActionHandler(action, handler); } catch { /* unsupported */ } };
-  set('play', () => audio.play().catch(() => {}));
-  set('pause', () => audio.pause());
-  set('seekbackward', () => skip(-settings.skipBack));
-  set('seekforward', () => skip(settings.skipFwd));
-  set('previoustrack', () => skip(-settings.skipBack));
-  set('nexttrack', () => skip(settings.skipFwd));
-  set('seekto', (d) => { if (d && d.seekTime != null) seekTo(d.seekTime, false); });
+  set('play', () => { markAwake(); audio.play().catch(() => {}); });
+  set('pause', () => { markAwake(); audio.pause(); });
+  set('seekbackward', () => { markAwake(); skip(-settings.skipBack); });
+  set('seekforward', () => { markAwake(); skip(settings.skipFwd); });
+  set('previoustrack', () => { markAwake(); skip(-settings.skipBack); });
+  set('nexttrack', () => { markAwake(); skip(settings.skipFwd); });
+  set('seekto', (d) => { markAwake(); if (d && d.seekTime != null) seekTo(d.seekTime, false); });
 }
 function updatePositionState() {
   if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState || !state.now) return;
@@ -1581,8 +1633,8 @@ audio.addEventListener('error', () => {
   });
 });
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') saveProgress(true, true);
-  else enforceSleepDeadline();
+  if (document.visibilityState === 'hidden') { markScreenOff(); saveProgress(true, true); }
+  else { enforceSleepDeadline(); markAwake(); }
 });
 window.addEventListener('pageshow', () => { enforceSleepDeadline(); armSleepAlarm(); });
 window.addEventListener('focus', () => enforceSleepDeadline());
@@ -1929,23 +1981,60 @@ function fmtDay(ts) {
 
 // The span from "still awake" to "timer stopped" is the part you slept through, so it gets
 // its own colour and both ends are labelled.
+function nightLabel(ts) {
+  const then = new Date(ts);
+  const today = new Date();
+  const sameDay = then.toDateString() === today.toDateString();
+  const yesterday = new Date(today.getTime() - 86400000).toDateString() === then.toDateString();
+  const clock = then.toLocaleTimeString(state.lang === 'en' ? 'en-GB' : 'de-DE', { hour: '2-digit', minute: '2-digit' });
+  if (sameDay) return `${t('todayAt')} ${clock}`;
+  if (yesterday) return `${t('yesterdayAt')} ${clock}`;
+  return `${then.toLocaleDateString(state.lang === 'en' ? 'en-GB' : 'de-DE', { day: '2-digit', month: '2-digit' })}, ${clock}`;
+}
+
+// The best evidence for "where I still was", newest first.
+function lastSignOf(run) {
+  return Math.max(Number(run.started_sec) || 0, Number(run.awake_sec) || 0, Number(run.hidden_sec) || 0);
+}
+
+// A place you can recognise beats a number you have to count. Chapter name first, exact
+// timestamp in brackets so it still matches the player clock you jump to.
+function placeLabel(book, seconds) {
+  const idx = chapterIndexAt(book, seconds);
+  const where = fmtTime(seconds);
+  return idx >= 0 ? `${chapterTitle(book, idx)} · ${where}` : where;
+}
+
+function signWording(run) {
+  if (run.hidden_sec != null && lastSignOf(run) === Number(run.hidden_sec)) return t('screenWentDark');
+  if (run.awake_sec != null && lastSignOf(run) === Number(run.awake_sec)) return t('lastTouched');
+  return t('timerSetAt');
+}
+
 function sleepHistoryHtml(book) {
   const runs = book.sleep_sessions || [];
   if (!runs.length) return '';
   return `<section class="section">
       <div class="section-head"><h2>${esc(t('sleepHistory'))}</h2></div>
       <div class="list">${runs.map((r) => {
-        const ran = Math.max(0, Number(r.stopped_sec) - Number(r.started_sec));
+        const sign = lastSignOf(r);
+        const slept = Math.max(0, Number(r.stopped_sec) - sign);
+        const clock = r.hidden_at || r.awake_at || r.started_at;
+        // One clock time per row: the moment of the last sign of life, which is the
+        // "when" a person is actually looking for. The stop time adds nothing.
         return `<div class="sleep-run">
-          <div class="muted small">${esc(nightLabel(r.stopped_at))}${r.kind === 'chapter' ? ` · ${esc(t('endOfChapter'))}` : ''}</div>
-          <div style="margin:4px 0 10px">
-            <strong>${esc(t('lastAwakeIn'))} ${esc(fmtDuration(r.started_sec))}</strong>
-            <div class="muted small">${esc(t('thenRan'))} ${esc(fmtDuration(ran))} ${esc(t('untilPos'))} ${esc(fmtDuration(r.stopped_sec))}</div>
+          <div class="row spread">
+            <span class="muted small">${esc(nightLabel(clock || r.stopped_at))}${r.kind === 'chapter' ? ` · ${esc(t('endOfChapter'))}` : ''}</span>
+            <button class="icon-small" data-action="delete-sleep" data-id="${r.id}" aria-label="${esc(t('delete'))}">${ICON.trash}</button>
           </div>
-          <div class="row" style="gap:8px">
-            <button class="small" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(r.started_sec)}">${esc(t('jumpBack'))}</button>
+          <div class="sleep-place">
+            <span class="legend awake">${esc(signWording(r))}</span>
+            <strong>${esc(placeLabel(book, sign))}</strong>
+            <span class="muted small">${esc(t('thenSlept'))} ${esc(fmtDuration(slept))}</span>
+          </div>
+          <div class="row" style="gap:8px;margin-top:10px">
+            <button class="small primary" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(sign)}">${esc(t('jumpBack'))}</button>
             <button class="small ghost" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(r.stopped_sec)}">${esc(t('toStop'))}</button>
-            <button class="small ghost" style="margin-left:auto;color:var(--terracotta)" data-action="delete-sleep" data-id="${r.id}" aria-label="${esc(t('delete'))}">${ICON.trash}</button>
           </div>
         </div>`;
       }).join('')}</div>
@@ -2288,12 +2377,15 @@ function openWishesHtml() {
 function lastSleepHintHtml(book) {
   const run = state.lastSleepRun;
   if (!run || run.book_id !== book.id) return '';
-  // Once you are outside the span again, the offer to jump back would only undo listening.
+  // A three-week-old night is not an offer, it is a trap.
+  if (run.stopped_at && Date.now() - run.stopped_at > 18 * 3600000) return '';
+  const target = Number(run.awake_sec) || Number(run.started_sec) || 0;
   const pos = Number(book.position_sec) || 0;
-  const stop = Number(run.stopped_sec) || run.started_sec;
-  if (pos < run.started_sec - 60 || pos > stop + 60) return '';
-  return `<button class="sleep-hint" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${Number(run.started_sec)}">
-      ${ICON.moon}<span>${esc(t('backToAwake'))} ${esc(fmtDuration(run.started_sec))}</span>
+  const stop = Number(run.stopped_sec) || target;
+  // Outside the span, or already listened past the mark: nothing left to offer.
+  if (pos < target - 60 || pos > stop + 60) return '';
+  return `<button class="sleep-hint" data-action="play-chapter" data-id="${esc(book.id)}" data-sec="${target}">
+      ${ICON.moon}<span>${esc(t('backToAwake'))} ${fmtTime(target)}</span>
     </button>`;
 }
 
@@ -2803,6 +2895,79 @@ function renderSheet() {
                 <button class="del" data-action="delete-bookmark" data-id="${bm.id}" aria-label="${esc(t('delete'))}">${ICON.close}</button>
               </div>` : bookmarkHtml(book, bm))).join('')}</div>`
           : `<p class="muted small center">${esc(t('noBookmarks'))}</p>`}`;
+  } else if (s.type === 'rating') {
+    const book = [state.detail, state.now].find((b) => b && b.id === s.bookId) || state.detail;
+    if (!book) return '';
+    body = `<h3 class="center">${esc(book.title)}</h3>${reviewSectionHtml(book).replace('<section class="section">', '<div>').replace('</section>', '</div>')}`;
+  } else if (s.type === 'stats') {
+    body = statsSheetHtml();
+  } else if (s.type === 'badge') {
+    const a = s.achievement;
+    body = `<div class="center">
+        <img class="badge-hero" src="/img/nook-pixel.png" alt="">
+        <h3>${esc(t('badgeEarned'))}</h3>
+        <div class="badge-name">${esc(badgeName(a.code))}</div>
+        <p class="muted small">${esc(badgeLine(a.code))}</p>
+        <div class="chips" style="justify-content:center;margin-top:14px">
+          ${a.shared_at ? `<span class="badge">${esc(t('alreadyShared'))}</span>` : `<button class="primary" data-action="share-badge" data-id="${a.id}">${esc(t('tellOther'))}</button>`}
+          <button data-action="close-sheet">${esc(t('close'))}</button>
+        </div>
+      </div>`;
+  } else if (s.type === 'cheer-ask') {
+    const a = s.achievement;
+    body = `<div class="center">
+        <img class="badge-hero" src="/img/nook-pixel.png" alt="">
+        <h3>${esc(a.user_name)} ${esc(t('reached'))}</h3>
+        <div class="badge-name">${esc(badgeName(a.code))}</div>
+        <p class="muted small">${esc(badgeLine(a.code))}</p>
+        <div class="chips" style="justify-content:center;margin-top:14px">
+          <button class="primary" data-action="cheer-badge" data-id="${a.id}">${esc(t('congratulate'))}</button>
+          <button data-action="close-sheet">${esc(t('later'))}</button>
+        </div>
+      </div>`;
+  } else if (s.type === 'cheer-got') {
+    const a = s.achievement;
+    body = `<div class="center">
+        <img class="badge-hero" src="/img/nook-pixel.png" alt="">
+        <h3>${esc(a.cheer_name)} ${esc(t('cheersYou'))}</h3>
+        <div class="badge-name">${esc(badgeName(a.code))}</div>
+        <div class="chips" style="justify-content:center;margin-top:14px">
+          <button class="primary" data-action="close-sheet">${esc(t('nice'))}</button>
+        </div>
+      </div>`;
+  } else if (s.type === 'history') {
+    const rows = state.history;
+    const naps = state.sleepLog || [];
+    const napFor = (bookId, at) => naps.find((n) => n.book_id === bookId && Math.abs(n.stopped_at - at) < 3 * 3600000);
+    body = `<h3>${esc(t('history'))}</h3>
+      <p class="muted small" style="margin:-4px 0 12px">${esc(t('historyHint'))}</p>
+      ${rows === null ? '<p class="muted small">…</p>'
+        : rows.length
+          ? `<div class="list">${rows.map((row) => {
+              const nap = napFor(row.book_id, row.updated_at);
+              const napTarget = nap ? Math.max(Number(nap.started_sec) || 0, Number(nap.awake_sec) || 0, Number(nap.hidden_sec) || 0) : 0;
+              return `<div class="history-row">
+                ${coverHtml(row, 'hist-cover')}
+                <div style="min-width:0">
+                  <div style="font-weight:700">${esc(row.title)}</div>
+                  <div class="muted small">${esc(nightLabel(row.updated_at))} · ${esc(t('upTo'))} ${esc(fmtDuration(row.position_sec))}${row.finished ? ` · ${esc(t('finished'))}` : ''}</div>
+                  ${nap ? `<div class="muted small">${esc(t('lastAwakeIn'))} ${fmtTime(napTarget)}</div>` : ''}
+                </div>
+                <div class="row" style="gap:6px;flex:none">
+                  ${nap ? `<button class="small" data-action="open-bookmark" data-id="${esc(row.book_id)}" data-sec="${napTarget}">${esc(t('jumpBack'))}</button>` : ''}
+                  <button class="small ${nap ? 'ghost' : ''}" data-action="open-bookmark" data-id="${esc(row.book_id)}" data-sec="${Number(row.position_sec)}">${esc(t('resume'))}</button>
+                </div>
+
+              </div>`;
+            }).join('')}</div>`
+          : `<p class="muted small center">${esc(t('noHistory'))}</p>`}`;
+  } else if (s.type === 'invite') {
+    body = `<h3 class="center">${esc(t('newInvite'))}</h3>
+      <p class="muted small center" style="margin-top:0">${esc(t('inviteHint'))}</p>
+      <div class="form">
+        <label><span>${esc(t('inviteFor'))}</span><input id="invite-label" maxlength="60" autocomplete="off" placeholder="Katie"></label>
+        <button class="primary" data-action="create-invite">${esc(t('newInvite'))}</button>
+      </div>`;
   } else if (s.type === 'wish') {
     body = `<h3 class="center">${esc(t('wishBook'))}</h3>
       <p class="muted small center" style="margin-top:0">${esc(t('wishHint'))}</p>
