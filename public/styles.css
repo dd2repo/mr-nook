@@ -559,9 +559,16 @@ input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border-radius
 .stat-big { font-size: 32px; font-weight: 800; text-align: center; margin: 10px 0 4px; }
 .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0 6px; }
 .stat-cell { background: var(--surface-2); border-radius: var(--radius-sm); padding: 12px 8px; text-align: center; }
-.stat-num { font-size: 22px; font-weight: 800; }
-.spark { display: flex; align-items: flex-end; gap: 4px; height: 54px; margin-top: 14px; }
-.spark span { flex: 1; background: var(--sage); border-radius: 3px 3px 0 0; min-height: 4px; }
+.stat-num { font-size: 18px; font-weight: 800; line-height: 1.2; }
+.spark-wrap { margin-top: 16px; }
+.spark-head { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.spark {
+  display: flex; align-items: flex-end; gap: 4px; height: 54px;
+  border-bottom: 1px solid var(--line); padding-bottom: 2px;
+}
+.spark-bar { flex: 1; background: var(--sage); border-radius: 3px 3px 0 0; min-height: 3px; }
+.spark-axis { display: flex; gap: 4px; margin-top: 4px; }
+.spark-axis span { flex: 1; text-align: center; font-size: 10px; color: var(--muted); }
 .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin-top: 10px; }
 .badge-tile {
   display: flex; flex-direction: column; align-items: center; gap: 6px;

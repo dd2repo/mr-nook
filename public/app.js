@@ -170,6 +170,8 @@ const STRINGS = {
     hoursShort: 'Std',
     booksFinished: 'Bücher fertig',
     lastDays: 'die letzten Tage',
+    perDay: 'Pro Tag, letzte zwei Wochen',
+    busiestDay: 'meistgehörter Tag:',
     badges: 'Abzeichen',
     noBadges: 'Noch keine. Die erste Stunde reicht schon.',
     nextBadge: 'Als Nächstes:',
@@ -401,6 +403,8 @@ const STRINGS = {
     hoursShort: 'h',
     booksFinished: 'books finished',
     lastDays: 'the last days',
+    perDay: 'Per day, last two weeks',
+    busiestDay: 'busiest day:',
     badges: 'Badges',
     noBadges: 'None yet. The first hour already counts.',
     nextBadge: 'Up next:',
@@ -2221,6 +2225,13 @@ function recentReviewsHtml() {
       </button>`).join('')}</div>`;
 }
 
+// One letter per bar, so a column of green means a day rather than nothing.
+function dayInitial(iso) {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(state.lang === 'en' ? 'en-GB' : 'de-DE', { weekday: 'narrow' });
+}
+
 function statsSheetHtml() {
   const st = state.stats;
   if (!st) return '<p class="muted small">…</p>';
@@ -2231,11 +2242,18 @@ function statsSheetHtml() {
     <div class="stat-big">${esc(fmtHours(st.total_seconds))}</div>
     <p class="muted small center" style="margin-top:-6px">${esc(t('totalListened'))}</p>
     <div class="stat-grid">
-      ${st.per_user.map((u) => `<div class="stat-cell"><div class="stat-num">${esc(fmtNumber(Math.floor(u.total / 3600)))}</div><div class="muted small">${esc(u.name)} · ${esc(t('hoursShort'))}</div></div>`).join('')}
+      ${st.per_user.map((u) => `<div class="stat-cell"><div class="stat-num">${esc(fmtDuration(u.total))}</div><div class="muted small">${esc(u.name)}</div></div>`).join('')}
       <div class="stat-cell"><div class="stat-num">${st.finished_books}</div><div class="muted small">${esc(t('booksFinished'))}</div></div>
     </div>
-    ${st.days.length ? `<div class="spark">${[...st.days].reverse().map((d) => `<span style="height:${Math.max(6, Math.round((d.seconds / maxDay) * 100))}%" title="${esc(d.day)}"></span>`).join('')}</div>
-      <p class="muted small center" style="margin-top:2px">${esc(t('lastDays'))}</p>` : ''}
+    ${st.days.length ? `<div class="spark-wrap">
+        <div class="spark-head">
+          <span class="muted small">${esc(t('perDay'))}</span>
+          <span class="muted small">${esc(t('busiestDay'))} ${esc(fmtDuration(maxDay))}</span>
+        </div>
+        <div class="spark">${[...st.days].reverse().map((d) => `
+          <span class="spark-bar" style="height:${Math.max(4, Math.round((d.seconds / maxDay) * 100))}%" title="${esc(d.day)}: ${esc(fmtDuration(d.seconds))}"></span>`).join('')}</div>
+        <div class="spark-axis">${[...st.days].reverse().map((d) => `<span>${esc(dayInitial(d.day))}</span>`).join('')}</div>
+      </div>` : ''}
     ${recentReviewsHtml()}
     <h3 style="margin-top:20px">${esc(t('badges'))}</h3>
     ${nextHours ? `<p class="muted small" style="margin-top:-6px">${esc(t('nextBadge'))} ${esc(badgeName(`hours-${nextHours}`))} · ${esc(fmtHours(nextHours * 3600 - st.total_seconds))} ${esc(t('toGo'))}</p>` : ''}
@@ -2456,7 +2474,13 @@ function renderHome() {
     hero = `<div class="empty card"><img class="hero small" src="/img/nook-pixel.png" alt=""><p class="muted">${esc(t('pickSomething'))}</p></div>`;
   }
 
-  const shelf = (title, list) => list.length ? `<section class="section"><div class="section-head"><h2>${esc(title)}</h2></div><div class="shelf">${list.map(tileHtml).join('')}</div></section>` : '';
+  const shelf = (title, list, action) => list.length ? `<section class="section">
+      <div class="section-head">
+        <h2>${esc(title)}</h2>
+        ${action ? `<button class="link small" data-action="${action}">${esc(t('history'))}</button>` : ''}
+      </div>
+      <div class="shelf">${list.map(tileHtml).join('')}</div>
+    </section>` : '';
 
   return `<header class="topbar">
       <div style="min-width:0">
@@ -2469,7 +2493,7 @@ function renderHome() {
     </header>
     ${hero}
     ${shelf(t('recentlyAdded'), recentlyAdded)}
-    ${shelf(t('recentlyPlayed'), recentlyPlayed)}
+    ${shelf(t('recentlyPlayed'), recentlyPlayed, 'sheet-history')}
     ${shelf(t('favorites'), favorites)}
     ${openWishesHtml()}
     <section class="section">
