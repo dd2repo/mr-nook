@@ -3,7 +3,7 @@
 // A downloaded book is stored as one full response in AUDIO_CACHE. The audio element always
 // asks for byte ranges, so a cached book gets sliced here and handed back as a 206. Books
 // that were not downloaded go straight to the network.
-const VERSION = 'mr-nook-v9';
+const VERSION = 'mr-nook-v16';
 const AUDIO_CACHE = 'mr-nook-audio';
 const SHELL = [
   '/',
@@ -43,14 +43,15 @@ self.addEventListener('message', (event) => {
 
 // Serves a byte range out of a full cached response.
 async function rangeFromCache(cached, rangeHeader) {
-  const buffer = await cached.arrayBuffer();
-  const size = buffer.byteLength;
-  const type = cached.headers.get('content-type') || 'audio/mpeg';
+  // blob.slice() is a view, so a seek does not pull a whole audiobook into memory.
+  const blob = await cached.blob();
+  const size = blob.size;
+  const type = blob.type || cached.headers.get('content-type') || 'audio/mpeg';
   const base = { 'content-type': type, 'accept-ranges': 'bytes', 'x-mr-nook-source': 'download' };
   const match = /^bytes=(\d*)-(\d*)$/.exec((rangeHeader || '').trim());
 
   if (!match || (match[1] === '' && match[2] === '')) {
-    return new Response(buffer, { status: 200, headers: { ...base, 'content-length': String(size) } });
+    return new Response(blob, { status: 200, headers: { ...base, 'content-length': String(size) } });
   }
 
   let start;
@@ -66,7 +67,7 @@ async function rangeFromCache(cached, rangeHeader) {
   if (!(start >= 0) || start >= size || end < start) {
     return new Response(null, { status: 416, headers: { ...base, 'content-range': `bytes */${size}` } });
   }
-  return new Response(buffer.slice(start, end + 1), {
+  return new Response(blob.slice(start, end + 1, type), {
     status: 206,
     headers: { ...base, 'content-length': String(end - start + 1), 'content-range': `bytes ${start}-${end}/${size}` },
   });

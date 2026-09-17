@@ -237,6 +237,16 @@ async function handleApi(request, env, url) {
 
   if (resource === 'search' && method === 'GET' && !id) return searchBooks(env, url);
 
+  if (resource === 'history' && method === 'GET' && !id) return listHistory(env, url);
+
+  if (resource === 'listening' && method === 'POST' && !id) return addListening(env, await readJson(request));
+  if (resource === 'stats' && method === 'GET' && !id) return getStats(env, url);
+
+  if (resource === 'achievements') {
+    if (method === 'GET' && !id) return listAchievements(env, url);
+    if (method === 'POST' && id) return updateAchievement(env, id, await readJson(request));
+  }
+
   // What the browser and Cloudflare actually negotiated for this connection.
   if (resource === 'security' && method === 'GET') {
     const cf = request.cf || {};
@@ -305,7 +315,10 @@ const BOOK_LIST_SELECT = `
   SELECT b.id, b.title, b.author, b.duration_sec, b.size_bytes, b.created_at,
          (b.cover_key IS NOT NULL) AS has_cover,
          (SELECT COUNT(*) FROM chapters c WHERE c.book_id = b.id) AS chapter_count,
-         (SELECT ROUND(AVG(rating), 1) FROM reviews r WHERE r.book_id = b.id) AS rating,
+         (SELECT r.rating FROM reviews r WHERE r.book_id = b.id AND r.user_id = ?1) AS my_rating,
+         (SELECT MAX(r.rating) FROM reviews r WHERE r.book_id = b.id AND r.user_id != ?1) AS their_rating,
+         (SELECT u.name FROM reviews r JOIN users u ON u.id = r.user_id
+           WHERE r.book_id = b.id AND r.user_id != ?1 ORDER BY r.rating DESC LIMIT 1) AS their_name,
          p.position_sec, p.finished, p.favorite, p.updated_at AS last_played
     FROM books b
     LEFT JOIN progress p ON p.book_id = b.id AND p.user_id = ?`;
@@ -445,6 +458,105 @@ async function deleteBook(env, bookId) {
 }
 
 // One row per sleep timer run: awake at started_sec, asleep somewhere before stopped_sec.
+// Badge thresholds in listening hours. The app knows the names, the worker only the maths.
+const BADGE_HOURS = [1, 5, 10, 25, 50, 100, 200, 350, 500, 750, 1000];
+
+function badgesFor(totalSeconds) {
+  const hours = totalSeconds / 3600;
+  return BADGE_HOURS.filter((h) => hours >= h).map((h) => `hours-${h}`);
+}
+
+async function addListening(env, body) {
+  const userId = requireInt(body.user_id, 'user_id');
+  const seconds = requireNumber(body.seconds, 'seconds');
+  // One post should never be able to claim more than an hour of listening.
+  const capped = Math.min(seconds, 3600);
+  const day = typeof body.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.day)
+    ? body.day
+    : new Date().toISOString().slice(0, 10);
+
+  await env.DB.prepare(
+    `INSERT INTO listening_days (user_id, day, seconds) VALUES (?, ?, ?)
+     ON CONFLICT(user_id, day) DO UPDATE SET seconds = seconds + excluded.seconds`,
+  ).bind(userId, day, capped).run();
+
+  const totals = await env.DB.prepare('SELECT COALESCE(SUM(seconds), 0) AS total FROM listening_days WHERE user_id = ?')
+    .bind(userId).first();
+  const total = Number(totals.total) || 0;
+
+  const { results: had } = await env.DB.prepare('SELECT code FROM achievements WHERE user_id = ?').bind(userId).all();
+  const have = new Set(had.map((r) => r.code));
+  const earned = badgesFor(total).filter((code) => !have.has(code));
+  if (earned.length) {
+    await env.DB.batch(earned.map((code) =>
+      env.DB.prepare('INSERT OR IGNORE INTO achievements (user_id, code, earned_at) VALUES (?, ?, ?)')
+        .bind(userId, code, Date.now())));
+  }
+  return json({ total_seconds: total, earned });
+}
+
+async function getStats(env, url) {
+  const userId = requireInt(url.searchParams.get('user'), 'user');
+  const [mine, everyone, days, finished] = await env.DB.batch([
+    env.DB.prepare('SELECT COALESCE(SUM(seconds), 0) AS total FROM listening_days WHERE user_id = ?').bind(userId),
+    env.DB.prepare(
+      `SELECT u.id, u.name, COALESCE(SUM(l.seconds), 0) AS total
+         FROM users u LEFT JOIN listening_days l ON l.user_id = u.id GROUP BY u.id ORDER BY u.id`,
+    ),
+    env.DB.prepare('SELECT day, seconds FROM listening_days WHERE user_id = ? ORDER BY day DESC LIMIT 14').bind(userId),
+    env.DB.prepare('SELECT COUNT(*) AS n FROM progress WHERE user_id = ? AND finished = 1').bind(userId),
+  ]);
+  return json({
+    total_seconds: Number(mine.results[0].total) || 0,
+    per_user: everyone.results,
+    days: days.results,
+    finished_books: Number(finished.results[0].n) || 0,
+  });
+}
+
+async function listAchievements(env, url) {
+  const userId = requireInt(url.searchParams.get('user'), 'user');
+  const [mine, inbox, cheers] = await env.DB.batch([
+    env.DB.prepare('SELECT id, code, earned_at, seen_at, shared_at, cheer_from, cheer_at FROM achievements WHERE user_id = ? ORDER BY earned_at DESC').bind(userId),
+    // Badges someone else shared with me and I have not cheered yet.
+    env.DB.prepare(
+      `SELECT a.id, a.code, a.earned_at, a.user_id, u.name AS user_name
+         FROM achievements a JOIN users u ON u.id = a.user_id
+        WHERE a.user_id != ? AND a.shared_at IS NOT NULL AND a.cheer_at IS NULL
+        ORDER BY a.shared_at DESC`,
+    ).bind(userId),
+    // Cheers on my badges that I have not seen yet.
+    env.DB.prepare(
+      `SELECT a.id, a.code, a.cheer_at, u.name AS cheer_name
+         FROM achievements a JOIN users u ON u.id = a.cheer_from
+        WHERE a.user_id = ? AND a.cheer_at IS NOT NULL AND a.cheer_seen_at IS NULL
+        ORDER BY a.cheer_at DESC`,
+    ).bind(userId),
+  ]);
+  return json({ mine: mine.results, inbox: inbox.results, cheers: cheers.results });
+}
+
+async function updateAchievement(env, id, body) {
+  const achievementId = requireInt(id, 'achievement id');
+  const action = body.action;
+  const now = Date.now();
+  if (action === 'seen') {
+    await env.DB.prepare('UPDATE achievements SET seen_at = ? WHERE id = ? AND seen_at IS NULL').bind(now, achievementId).run();
+  } else if (action === 'share') {
+    await env.DB.prepare('UPDATE achievements SET shared_at = ?, seen_at = COALESCE(seen_at, ?) WHERE id = ?').bind(now, now, achievementId).run();
+  } else if (action === 'cheer') {
+    const from = requireInt(body.user_id, 'user_id');
+    await env.DB.prepare('UPDATE achievements SET cheer_from = ?, cheer_at = ? WHERE id = ? AND user_id != ?')
+      .bind(from, now, achievementId, from).run();
+  } else if (action === 'cheer-seen') {
+    await env.DB.prepare('UPDATE achievements SET cheer_seen_at = ? WHERE id = ?').bind(now, achievementId).run();
+  } else {
+    throw new HttpError(400, 'unknown action');
+  }
+  return json({ ok: true });
+}
+
+
 async function createSleepSession(env, body) {
   const userId = requireInt(body.user_id, 'user_id');
   const bookId = requireBookId(body.book_id);
@@ -467,11 +579,32 @@ async function createSleepSession(env, body) {
 
 async function listSleepSessions(env, url) {
   const userId = requireInt(url.searchParams.get('user'), 'user');
-  const bookId = requireBookId(url.searchParams.get('book'));
+  const rawBook = url.searchParams.get('book');
+  if (rawBook) {
+    const { results } = await env.DB.prepare(
+      `SELECT id, started_sec, stopped_sec, kind, started_at, stopped_at
+         FROM sleep_sessions WHERE user_id = ? AND book_id = ? ORDER BY stopped_at DESC LIMIT 20`,
+    ).bind(userId, requireBookId(rawBook)).all();
+    return json(results);
+  }
   const { results } = await env.DB.prepare(
-    `SELECT id, started_sec, stopped_sec, kind, started_at, stopped_at
-       FROM sleep_sessions WHERE user_id = ? AND book_id = ? ORDER BY stopped_at DESC LIMIT 20`,
-  ).bind(userId, bookId).all();
+    `SELECT s.id, s.book_id, s.started_sec, s.stopped_sec, s.kind, s.started_at, s.stopped_at,
+            b.title AS book_title, (b.cover_key IS NOT NULL) AS has_cover
+       FROM sleep_sessions s JOIN books b ON b.id = s.book_id
+      WHERE s.user_id = ? ORDER BY s.stopped_at DESC LIMIT 40`,
+  ).bind(userId).all();
+  return json(results);
+}
+
+// What was listened to lately, newest first, for the history screen.
+async function listHistory(env, url) {
+  const userId = requireInt(url.searchParams.get('user'), 'user');
+  const { results } = await env.DB.prepare(
+    `SELECT p.book_id, p.position_sec, p.finished, p.updated_at, b.title, b.author, b.duration_sec,
+            (b.cover_key IS NOT NULL) AS has_cover
+       FROM progress p JOIN books b ON b.id = p.book_id
+      WHERE p.user_id = ? AND p.updated_at > 0 ORDER BY p.updated_at DESC LIMIT 40`,
+  ).bind(userId).all();
   return json(results);
 }
 
@@ -497,8 +630,10 @@ async function listReviews(env, url) {
 async function saveReview(env, body) {
   const userId = requireInt(body.user_id, 'user_id');
   const bookId = requireBookId(body.book_id);
-  const rating = requireInt(body.rating, 'rating');
-  if (rating < 1 || rating > 5) throw new HttpError(400, 'rating must be between 1 and 5');
+  const text = typeof body.text === 'string' ? body.text.trim().slice(0, 1000) : '';
+  const rating = body.rating === null || body.rating === undefined ? null : requireInt(body.rating, 'rating');
+  if (rating !== null && (rating < 1 || rating > 5)) throw new HttpError(400, 'rating must be between 1 and 5');
+  if (rating === null && !text) throw new HttpError(400, 'nothing to save');
   // A review only counts once the book was actually finished.
   const progress = await env.DB.prepare('SELECT finished FROM progress WHERE user_id = ? AND book_id = ?')
     .bind(userId, bookId).first();
@@ -507,7 +642,7 @@ async function saveReview(env, body) {
   await env.DB.prepare(
     `INSERT INTO reviews (user_id, book_id, rating, text, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT(user_id, book_id) DO UPDATE SET rating = excluded.rating, text = excluded.text, updated_at = excluded.updated_at`,
-  ).bind(userId, bookId, rating, typeof body.text === 'string' ? body.text.trim().slice(0, 1000) : '', now, now).run();
+  ).bind(userId, bookId, rating, text, now, now).run();
   return json({ ok: true, rating });
 }
 
